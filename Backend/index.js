@@ -1,0 +1,43 @@
+import express from "express";
+import { } from "dotenv/config";
+import loaders from "./loaders/index.js";
+import config from "./config/index.js";
+import userRoute from "./routes/user/index.js"; // import your user routes
+
+async function startServer() {
+  const app = express();
+
+  // Needed middlewares
+  app.use(express.json()); // parse JSON
+  app.use(express.urlencoded({ extended: true }));
+
+  await loaders.init({ expressApp: app });
+
+  // ---- MOUNT ROUTES ----
+  // unprotected routes
+  app.use("/api", userRoute);  // now /api/login, /api/register, /api/mealGen
+
+  // If you have protected routes:
+  // import { protectedRouter } from "./routes/index.js";
+  // app.use("/api", protectedRouter);
+
+  const server = app.listen(config.env.port, () =>
+    console.log(`Server Started ~ :${config.env.port}`)
+  );
+
+  process.on("uncaughtException", (err) => {
+    console.log("uncaughtException! Shutting Down the Server...");
+    console.log(err);
+    process.exit(1);
+  });
+
+  process.on("unhandledRejection", (err) => {
+    console.log("unhandledRejection! Shutting Down the Server...");
+    console.log(err);
+    server.close(() => {
+      process.exit(1);
+    });
+  });
+}
+
+startServer();
