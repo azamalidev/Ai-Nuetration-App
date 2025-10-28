@@ -4,13 +4,51 @@ import UserService from "../../services/user.js";
 import httpResponse from "../../utils/httpResponse.js";
 import fetch from "node-fetch";
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import cloudinary from "../../utils/cloudinary.js";
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-
 const controller = {
-  register: async (req, res) => {
-    const addResponse = await UserService.add(req.body);
+register: async (req, res) => {
+  try {
+    let imageUrl = null;
+
+    if (req.file) {
+      try {
+        // Upload image to Cloudinary
+        imageUrl = await new Promise((resolve, reject) => {
+          const stream = cloudinary.uploader.upload_stream(
+            { folder: "nutritionists" },
+            (error, result) => {
+              if (error) return reject(error);
+              resolve(result.secure_url);
+            }
+          );
+
+          const bufferStream = new (require("stream").Readable)();
+          bufferStream.push(req.file.buffer);
+          bufferStream.push(null);
+          bufferStream.pipe(stream);
+        });
+      } catch (error) {
+        console.error("Cloudinary upload failed:", error);
+        return res.status(500).json({ message: "Image upload failed" });
+      }
+    }
+
+    // Merge image URL into body
+    const userData = {
+      ...req.body,
+      profileImage: imageUrl || null,
+    };
+
+    // Convert certifications string to array if needed
+    if (userData.certifications && typeof userData.certifications === "string") {
+      userData.certifications = userData.certifications.split(",").map(s => s.trim());
+    }
+
+    const addResponse = await UserService.add(userData);
+
     if (addResponse.message === "success") {
       return httpResponse.CREATED(res, addResponse.data);
     } else if (addResponse.message === "failed") {
@@ -18,7 +56,11 @@ const controller = {
     } else {
       return httpResponse.INTERNAL_SERVER(res, addResponse.data);
     }
-  },
+  } catch (err) {
+    console.error("Register error:", err);
+    return res.status(500).json({ message: "Registration failed" });
+  }
+},
 
   login: async (req, res) => {
     const data = await UserService.login(req.body);
@@ -109,7 +151,7 @@ const controller = {
     }
   },
 
- analyzeFoodImage: async (req, res) => {
+  analyzeFoodImage: async (req, res) => {
     try {
       if (!req.file) {
         return res.status(400).json({ error: "No image uploaded" });
@@ -119,7 +161,8 @@ const controller = {
       const base64Image = req.file.buffer.toString("base64");
 
       const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-      const prompt = "Analyze this food image and give nutrients (calories, protein, fat, fiber, carbs)";
+      const prompt =
+        "Analyze this food image and give nutrients (calories, protein, fat, fiber, carbs)";
 
       const result = await model.generateContent([
         { inlineData: { mimeType: req.file.mimetype, data: base64Image } },
@@ -132,8 +175,6 @@ const controller = {
       res.status(500).json({ error: "Failed to analyze image" });
     }
   },
-
-
 
   generateMealPlan: async (req, res) => {
     try {
@@ -199,38 +240,34 @@ Return ONLY valid JSON with no extra text or formatting:
 
       // ...existing code...
 
-     const apiKey = process.env.GEMINI_API_KEY;
+      const apiKey = process.env.GEMINI_API_KEY;
 
-const url = `https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+      const url = `https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
 
-const requestBody = {
-  contents: [
-    {
-      parts: [
-        {
-          text: prompt,
+      const requestBody = {
+        contents: [
+          {
+            parts: [
+              {
+                text: prompt,
+              },
+            ],
+          },
+        ],
+        generationConfig: {
+          temperature: 0.7,
+          maxOutputTokens: 8192,
         },
-      ],
-    },
-  ],
- generationConfig: {
-  temperature: 0.7,
-  maxOutputTokens: 8192,
+      };
 
-
-  },
-};
-
-console.log("📡 Calling Gemini API...");
-const response = await fetch(url, {
-  method: "POST",
-  headers: {
-    "Content-Type": "application/json",
-  },
-  body: JSON.stringify(requestBody),
-});
-
-    
+      console.log("📡 Calling Gemini API...");
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(requestBody),
+      });
 
       if (!response.ok) {
         const errorData = await response.json();

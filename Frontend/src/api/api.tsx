@@ -214,24 +214,19 @@ class ApiService {
         return handleResponse(response);
     }
 
-    // Login user
-    async login(credentials: LoginData): Promise<ApiResponse> {
-        const response = await fetch(`${this.baseUrl}/login`, {
-            method: 'POST',
-            headers: getAuthHeaders(),
-            body: JSON.stringify(credentials),
-        });
+ async login(credentials: LoginData): Promise<ApiResponse> {
+  const response = await fetch(`${this.baseUrl}/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' }, // no auth for login
+    body: JSON.stringify({ email: credentials.email, password: credentials.password }),
+  });
 
-        const result = await handleResponse(response);
-
-        // Store token in localStorage if login successful
-        if (result) {
-            localStorage.setItem('authToken', result.data.token);
-            console.log("toktok")
-        }
-
-        return result;
-    }
+  const result = await handleResponse(response);
+  if (result.data?.token) {
+    localStorage.setItem('authToken', result.data.token);
+  }
+  return result;
+}
 
     // Get user profile
     async getUserProfile(): Promise<ApiResponse> {
