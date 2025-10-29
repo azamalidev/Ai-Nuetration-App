@@ -1,5 +1,6 @@
-import { ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+
 
 import { useAuthContext } from '../authContext';
 import React, { useState, useEffect } from 'react';
@@ -46,8 +47,18 @@ const Dashboard = () => {
 
 
 
-
   const { isLoading } = useAuthContext();
+  
+  // ✅ added: helper to check whether user's medical/profile fields are filled
+  const isProfileComplete = () => {
+    if (!user) return false;
+    const required = ['age', 'gender', 'weight', 'height', 'dietaryPreferance', 'healthGoal', 'activityLevel'];
+    return required.every((key) => {
+      const val = user[key];
+      // treat 0 or '0' as valid if needed — here we require truthy values
+      return val !== undefined && val !== null && val !== '';
+    });
+  }; // ✅ added
 
 
   const fetchProfile = async () => {
@@ -92,6 +103,12 @@ const Dashboard = () => {
     return <div></div>;
   }
   const handleFoodUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    // ✅ added: block nutrition analysis upload if profile incomplete
+    if (!isProfileComplete()) {
+      toast.error('Please complete your medical profile .');
+      return;
+    } // ✅ added
+
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -132,11 +149,18 @@ const Dashboard = () => {
 
 
 
+
   const generateMealPlan = async () => {
     if (!user) {
       setError('Please log in to generate a meal plan');
       return;
     }
+
+    // ✅ added: ensure profile is complete before generating meal plan
+    if (!isProfileComplete()) {
+      toast.error('Please complete your medical profile.');
+      return;
+    } // ✅ added
 
     setLoading(true);
     setError(null);
@@ -184,6 +208,7 @@ toast.error(err instanceof Error ? err.message : 'Failed to generate meal plan')
       tags: [mealType, user?.dietaryPreferance || 'general'].filter(Boolean)
     };
   };
+
 
 
 
@@ -259,6 +284,12 @@ toast.success('Meal plan approved and saved successfully!');
   };
 
   const getRecipeRecommendations = async () => {
+    // ✅ added: require completed profile for recipe recommendations
+    if (!isProfileComplete()) {
+      toast.error('Please complete your medical profile ');
+      return;
+    } // ✅ added
+
     if (availableIngredients.length === 0) {
       setError('Please add some ingredients first');
       return;
@@ -285,6 +316,12 @@ toast.success('Meal plan approved and saved successfully!');
   };
 
   const generateGroceryList = async () => {
+    // ✅ added: require completed profile for grocery generation
+    if (!isProfileComplete()) {
+      toast.error('Please complete your medical profile');
+      return;
+    } // ✅ added
+
     if (!mealPlan) {
       setError('Please generate a meal plan first');
       return;

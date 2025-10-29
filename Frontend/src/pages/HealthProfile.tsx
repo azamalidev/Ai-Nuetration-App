@@ -1,15 +1,25 @@
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
-import { ToastContainer, toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
-
-
-import React, { useEffect, useState } from 'react';
-import { Edit2, User, Target, Activity, Utensils, BookOpen, X, ArrowLeft, Flame, Heart, TrendingUp, Calendar } from 'lucide-react';
-import MealsComponent from '../components/mealsProfile';
-import RecipeComponent from '../components/recipeProfile';
-import Navbar from '../components/navbar';
-import ProfileUpdateModal from '../AdminPanel/components/UserUpdateModal';
-
+import React, { useEffect, useState } from "react";
+import {
+  Edit2,
+  User,
+  Target,
+  Activity,
+  Utensils,
+  BookOpen,
+  X,
+  ArrowLeft,
+  Flame,
+  Heart,
+  TrendingUp,
+  Calendar,
+} from "lucide-react";
+import MealsComponent from "../components/mealsProfile";
+import RecipeComponent from "../components/recipeProfile";
+import Navbar from "../components/navbar";
+import ProfileUpdateModal from "../AdminPanel/components/UserUpdateModal";
 
 function HealthProfile() {
   const [showModal, setShowModal] = useState(false);
@@ -21,47 +31,45 @@ function HealthProfile() {
   const [showRecipeComponent, setShowRecipeComponent] = useState(false);
 
   const [profileData, setProfileData] = useState<any>({
-    name: '',
-    age: '',
-    gender: '',
-    weight: '',
-    height: '',
-    dietaryPreferance: '',
-    healthGoal: '',
-    activityLevel: '',
-    role: '',
-    bio: '',
+    name: "",
+    age: "",
+    gender: "",
+    weight: "",
+    height: "",
+    dietaryPreferance: "",
+    healthGoal: "",
+    activityLevel: "",
+    role: "",
+    bio: "",
     certifications: [],
-    yearsOfExperience: '',
-    specialization: '',
-    qualifications: '',
+    yearsOfExperience: "",
+    specialization: "",
+    qualifications: "",
   });
-
-
 
   const fetchProfile = async () => {
     try {
       setLoading(true);
-      const { apiService } = await import('../api/api');
+      const { apiService } = await import("../api/api");
       const response = await apiService.getUserProfile();
       console.log("response", response);
 
       if (response?.data) {
         const userData = {
-          name: response.data.data.name || '',
-          age: response.data.data.age || '',
-          gender: response.data.data.gender || '',
-          weight: response.data.data.weight || '',
-          height: response.data.data.height || '',
-          dietaryPreferance: response.data.data.dietaryPreferance || '',
-          healthGoal: response.data.data.healthGoal || '',
-          activityLevel: response.data.data.activityLevel || '',
-          role: response.data.data.role || '',
-          bio: response.data.data.bio || '',
+          name: response.data.data.name || "",
+          age: response.data.data.age || "",
+          gender: response.data.data.gender || "",
+          weight: response.data.data.weight || "",
+          height: response.data.data.height || "",
+          dietaryPreferance: response.data.data.dietaryPreferance || "",
+          healthGoal: response.data.data.healthGoal || "",
+          activityLevel: response.data.data.activityLevel || "",
+          role: response.data.data.role || "",
+          bio: response.data.data.bio || "",
           certifications: response.data.data.certifications || [],
-          yearsOfExperience: response.data.data.yearsOfExperience || '',
-          specialization: response.data.data.specialization || '',
-          qualifications: response.data.data.qualifications || '',
+          yearsOfExperience: response.data.data.yearsOfExperience || "",
+          specialization: response.data.data.specialization || "",
+          qualifications: response.data.data.qualifications || "",
         };
         setProfileData(userData);
 
@@ -73,7 +81,8 @@ function HealthProfile() {
         }
       }
     } catch (error) {
-  toast.error('Failed to load profile. Please try again.')    } finally {
+      toast.error("Failed to load profile. Please try again.");
+    } finally {
       setLoading(false);
     }
   };
@@ -84,53 +93,51 @@ function HealthProfile() {
 
   async function handleDeleteDish(dishId: any) {
     try {
-      const { apiService } = await import('../api/api');
+      const { apiService } = await import("../api/api");
       const result = await apiService.deleteDish(dishId);
 
       if (result) {
         fetchProfile();
         handleBackToProfile();
-      toast.success('Dish deleted successfully!');
+        toast.success("Dish deleted successfully!");
       } else {
-      toast.error('Failed to delete dish.');
+        toast.error("Failed to delete dish.");
       }
     } catch (error) {
-    toast.error('An error occurred while deleting dish.');
+      toast.error("An error occurred while deleting dish.");
     }
   }
   async function handleDeleteMeal(mealId: any) {
     try {
-      const { apiService } = await import('../api/api');
+      const { apiService } = await import("../api/api");
       const result = await apiService.deleteMealPlan(mealId);
 
       if (result) {
         fetchProfile();
         handleBackToProfile();
-      toast.success('Meal deleted successfully!');
+        toast.success("Meal deleted successfully!");
       } else {
-      toast.error('Failed to delete meal.');
+        toast.error("Failed to delete meal.");
       }
     } catch (error) {
-    toast.error('An error occurred while deleting meal.');
+      toast.error("An error occurred while deleting meal.");
     }
   }
 
   const handleSubmit = async (formData: any) => {
     setUpdating(true);
     try {
-      const { apiService } = await import('../api/api');
+      const { apiService } = await import("../api/api");
       const response = await apiService.updateUserProfile(formData);
       setProfileData(formData);
       setShowModal(false);
     } catch (error) {
-    toast.success('Profile updated successfully!');
-    toast.error('Something went wrong. Please try again.');
+      toast.success("Profile updated successfully!");
+      toast.error("Something went wrong. Please try again.");
     } finally {
       setUpdating(false);
     }
   };
-
-
 
   const openModal = () => {
     setShowModal(true);
@@ -154,20 +161,21 @@ function HealthProfile() {
   };
 
   const formatValue = (value: any) => {
-    if (!value) return 'Not set';
-    return value.split(' ').map((word: string) =>
-      word.charAt(0).toUpperCase() + word.slice(1)
-    ).join(' ');
+    if (!value) return "Not set";
+    return value
+      .split(" ")
+      .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(" ");
   };
-
-
 
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-teal-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-4 border-emerald-200 border-t-emerald-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600 font-medium">Loading your profile...</p>
+          <p className="mt-4 text-gray-600 font-medium">
+            Loading your profile...
+          </p>
         </div>
       </div>
     );
@@ -223,8 +231,6 @@ function HealthProfile() {
     );
   }
 
-
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-teal-50">
       <Navbar />
@@ -242,9 +248,11 @@ function HealthProfile() {
                 </div>
                 <div className="text-center sm:text-left">
                   <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1">
-                    {profileData.name || 'Welcome'}
+                    {profileData.name || "Welcome"}
                   </h1>
-                  <p className="text-gray-600 text-base sm:text-lg">Health Profile Dashboard</p>
+                  <p className="text-gray-600 text-base sm:text-lg">
+                    Health Profile Dashboard
+                  </p>
                   <div className="flex items-center justify-center sm:justify-start mt-2">
                     <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-emerald-100 text-emerald-800">
                       <Heart className="w-4 h-4 mr-1" />
@@ -264,8 +272,6 @@ function HealthProfile() {
           </div>
           {/* Stats Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-
-
             {/* Weight & Height Card */}
             <div className="bg-white rounded-2xl shadow-lg p-6 border border-green-100">
               <div className="flex items-center justify-between mb-4">
@@ -276,10 +282,11 @@ function HealthProfile() {
               <div>
                 <p className="text-sm text-gray-600 mb-1">Weight</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {profileData.weight ? `${profileData.weight} kg` : '--'}
+                  {profileData.weight ? `${profileData.weight} kg` : "--"}
                 </p>
                 <p className="text-sm text-gray-500">
-                  Height: {profileData.height ? `${profileData.height} cm` : '--'}
+                  Height:{" "}
+                  {profileData.height ? `${profileData.height} cm` : "--"}
                 </p>
               </div>
             </div>
@@ -297,7 +304,7 @@ function HealthProfile() {
                   {formatValue(profileData.activityLevel)}
                 </p>
                 <p className="text-sm text-gray-500">
-                  Age: {profileData.age ? `${profileData.age} years` : '--'}
+                  Age: {profileData.age ? `${profileData.age} years` : "--"}
                 </p>
               </div>
             </div>
@@ -324,17 +331,23 @@ function HealthProfile() {
 
           {/* Profile Details */}
           <div className="bg-white rounded-2xl shadow-lg p-8 mb-8 border border-gray-100">
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">Profile Details</h2>
+            <h2 className="text-2xl font-bold text-gray-900 mb-6">
+              Profile Details
+            </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <div className="space-y-6">
                 <div>
-                  <p className="text-sm font-medium text-gray-500 mb-2">Gender</p>
+                  <p className="text-sm font-medium text-gray-500 mb-2">
+                    Gender
+                  </p>
                   <p className="text-lg text-gray-900 font-medium">
                     {formatValue(profileData.gender)}
                   </p>
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-gray-500 mb-2">Health Goal</p>
+                  <p className="text-sm font-medium text-gray-500 mb-2">
+                    Health Goal
+                  </p>
                   <p className="text-lg text-gray-900 font-medium">
                     {formatValue(profileData.healthGoal)}
                   </p>
@@ -342,13 +355,17 @@ function HealthProfile() {
               </div>
               <div className="space-y-6">
                 <div>
-                  <p className="text-sm font-medium text-gray-500 mb-2">Dietary Preference</p>
+                  <p className="text-sm font-medium text-gray-500 mb-2">
+                    Dietary Preference
+                  </p>
                   <p className="text-lg text-gray-900 font-medium">
                     {formatValue(profileData.dietaryPreferance)}
                   </p>
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-gray-500 mb-2">Activity Level</p>
+                  <p className="text-sm font-medium text-gray-500 mb-2">
+                    Activity Level
+                  </p>
                   <p className="text-lg text-gray-900 font-medium">
                     {formatValue(profileData.activityLevel)}
                   </p>
@@ -358,7 +375,7 @@ function HealthProfile() {
           </div>
 
           {/* Nutritionist Professional Information */}
-          {profileData.role === 'NUTRITIONIST' && (
+          {profileData.role === "NUTRITIONIST" && (
             <div className="bg-gradient-to-r from-emerald-50 to-teal-50 rounded-2xl shadow-lg p-8 mb-8 border border-emerald-200">
               <h2 className="text-2xl font-bold text-emerald-900 mb-6 flex items-center">
                 <BookOpen className="w-6 h-6 mr-3" />
@@ -367,45 +384,63 @@ function HealthProfile() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div className="space-y-6">
                   <div>
-                    <p className="text-sm font-medium text-emerald-700 mb-2">Qualifications</p>
+                    <p className="text-sm font-medium text-emerald-700 mb-2">
+                      Qualifications
+                    </p>
                     <p className="text-lg text-emerald-900 font-medium">
-                      {profileData.qualifications || 'Not specified'}
+                      {profileData.qualifications || "Not specified"}
                     </p>
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-emerald-700 mb-2">Specialization</p>
+                    <p className="text-sm font-medium text-emerald-700 mb-2">
+                      Specialization
+                    </p>
                     <p className="text-lg text-emerald-900 font-medium">
-                      {profileData.specialization || 'Not specified'}
+                      {profileData.specialization || "Not specified"}
                     </p>
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-emerald-700 mb-2">Years of Experience</p>
+                    <p className="text-sm font-medium text-emerald-700 mb-2">
+                      Years of Experience
+                    </p>
                     <p className="text-lg text-emerald-900 font-medium">
-                      {profileData.yearsOfExperience ? `${profileData.yearsOfExperience} years` : 'Not specified'}
+                      {profileData.yearsOfExperience
+                        ? `${profileData.yearsOfExperience} years`
+                        : "Not specified"}
                     </p>
                   </div>
                 </div>
                 <div className="space-y-6">
                   <div>
-                    <p className="text-sm font-medium text-emerald-700 mb-2">Certifications</p>
+                    <p className="text-sm font-medium text-emerald-700 mb-2">
+                      Certifications
+                    </p>
                     <div className="text-lg text-emerald-900 font-medium">
-                      {profileData.certifications && profileData.certifications.length > 0 ? (
+                      {profileData.certifications &&
+                      profileData.certifications.length > 0 ? (
                         <div className="flex flex-wrap gap-2">
-                          {profileData.certifications.map((cert: string, index: number) => (
-                            <span key={index} className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-emerald-100 text-emerald-800">
-                              {cert}
-                            </span>
-                          ))}
+                          {profileData?.certifications?.map(
+                            (cert: string, index: number) => (
+                              <span
+                                key={index}
+                                className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-emerald-100 text-emerald-800"
+                              >
+                                {cert}
+                              </span>
+                            )
+                          )}
                         </div>
                       ) : (
-                        'No certifications listed'
+                        "No certifications listed"
                       )}
                     </div>
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-emerald-700 mb-2">Bio</p>
+                    <p className="text-sm font-medium text-emerald-700 mb-2">
+                      Bio
+                    </p>
                     <p className="text-lg text-emerald-900 font-medium">
-                      {profileData.bio || 'No bio provided'}
+                      {profileData.bio || "No bio provided"}
                     </p>
                   </div>
                 </div>
@@ -427,9 +462,12 @@ function HealthProfile() {
                   <ArrowLeft className="w-6 h-6 rotate-180" />
                 </div>
               </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-3">Meal Plans</h3>
+              <h3 className="text-xl font-bold text-gray-900 mb-3">
+                Meal Plans
+              </h3>
               <p className="text-gray-600 leading-relaxed">
-                View and manage your personalized meal plans tailored to your health goals and dietary preferences.
+                View and manage your personalized meal plans tailored to your
+                health goals and dietary preferences.
               </p>
               <div className="mt-4 text-sm text-orange-600 font-medium">
                 {mealsData.length} meal plans available
@@ -450,7 +488,8 @@ function HealthProfile() {
               </div>
               <h3 className="text-xl font-bold text-gray-900 mb-3">Recipes</h3>
               <p className="text-gray-600 leading-relaxed">
-                Discover delicious recipes tailored to your dietary preferences and nutritional requirements.
+                Discover delicious recipes tailored to your dietary preferences
+                and nutritional requirements.
               </p>
               <div className="mt-4 text-sm text-red-600 font-medium">
                 {recipeData.length} recipes available

@@ -2,16 +2,29 @@
 
 import { useState, useEffect } from 'react';
 import { useAuthContext } from '../authContext';
+
 import { StreamCall, useStreamVideoClient } from '@stream-io/video-react-sdk';
 import VideoConsultationRoom from './VideoConsultationRoom';
 import { Button } from './ui/button';
 import { Video, Phone, Clipboard, X, Briefcase } from 'lucide-react';
+import EmeraldLoader from '../components/loader';
 
 
 
 export default function VideoConsultation({ onClose }: { onClose?: () => void }) {
   const { user } = useAuthContext();
+  // ✅ Check if the user's medical profile is complete
+const isProfileComplete = (user) => {
+  return (
+    user?.medical_conditions &&
+    user?.height &&
+    user?.weight &&
+    user?.age
+  );
+};
+
   const client = useStreamVideoClient();
+const [loading, setLoading] = useState(false);
 
   const [call, setCall] = useState<any>(null);
   const [showModal, setShowModal] = useState(false);
@@ -29,7 +42,9 @@ export default function VideoConsultation({ onClose }: { onClose?: () => void })
 
   useEffect(() => {
     const fetchNutritionists = async () => {
-      try {
+    try {
+      setLoading(true); // start loader
+      
         const token = localStorage.getItem('authToken');
         if (!token) {
           console.error("You must be logged in to fetch nutritionists.");
@@ -42,6 +57,7 @@ export default function VideoConsultation({ onClose }: { onClose?: () => void })
           method: 'GET',
           headers: {
             'Authorization': `Bearer ${token}`,
+            
           },
         });
 
@@ -54,6 +70,9 @@ export default function VideoConsultation({ onClose }: { onClose?: () => void })
       } catch (error) {
         console.error('Error fetching nutritionists:', error);
       }
+      finally {
+  setLoading(false);
+}
     };
 
     fetchNutritionists();
@@ -111,6 +130,7 @@ export default function VideoConsultation({ onClose }: { onClose?: () => void })
   };
 
   const sendRequest = async () => {
+    
     if (!selectedNutritionist) return;
     if (!requestTime || !requestReason) {
       alert('Please enter time and reason for consultation');
@@ -118,6 +138,7 @@ export default function VideoConsultation({ onClose }: { onClose?: () => void })
     }
 
     try {
+    setLoading(true); // 🟢 show loader
       const token = localStorage.getItem('authToken'); // or wherever you store it after login
       if (!token) {
         alert("You must be logged in to send a request.");
@@ -195,54 +216,60 @@ export default function VideoConsultation({ onClose }: { onClose?: () => void })
     <div className="p-6 bg-white rounded-lg shadow-md space-y-6">
       <h3 className="text-xl font-semibold mb-4">Video Consultation</h3>
 
-      {/* Nutritionist Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8 mt-8">
-        {nutritionists.map((n) => (
-          <div
-            key={n._id}
-            onClick={() => openRequestModal(n)}
-            className="bg-white rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 cursor-pointer border border-transparent hover:border-emerald-200"
-          >
-
-            <div className="p-6 flex flex-col items-center text-center">
-              <div className="relative">
-                <img
-                  src={`${baseUrl}${n.profileImage}`}
-                  alt={n.name}
-                  className="w-24 h-24 rounded-full object-cover border-4 border-emerald-100 shadow-sm"
-                />
-              </div>
-
-              <h4 className="text-lg font-semibold text-gray-800 mt-3">{n.name}</h4>
-              <p className="text-sm text-gray-500">{n.qualifications}</p>
-
-              <div className="flex items-center justify-center gap-2 mt-2 text-xs text-emerald-700 font-medium">
-                <Briefcase size={14} />
-                <span>
-                  {n.yearsOfExperience} {n.yearsOfExperience === 1 ? "Year" : "Years"} Experience
-                </span>
-              </div>
-
-              {n.certifications?.length > 0 && (
-                <div className="flex flex-wrap justify-center mt-3 gap-2">
-                  {n.certifications.map((cert) => (
-                    <span
-                      key={cert}
-                      className="text-xs bg-emerald-50 text-emerald-700 px-3 py-1 rounded-full border border-emerald-100"
-                    >
-                      {cert}
-                    </span>
-                  ))}
-                </div>
-              )}
-
-              <button className="mt-4 px-4 py-2 bg-emerald-600 text-white text-sm rounded-full hover:bg-emerald-700 transition">
-                View Profile
-              </button>
-            </div>
+     {/* Nutritionist Cards */}
+{loading ? (
+  <div className="flex justify-center items-center h-[50vh]">
+    <EmeraldLoader />
+  </div>
+) : (
+  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8 mt-8">
+    {nutritionists.map((n) => (
+      <div
+        key={n._id}
+        onClick={() => openRequestModal(n)}
+        className="bg-white rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 cursor-pointer border border-transparent hover:border-emerald-200"
+      >
+        <div className="p-6 flex flex-col items-center text-center">
+          <div className="relative">
+            <img
+              src={`${baseUrl}${n.profileImage}`}
+              alt={n.name}
+              className="w-24 h-24 rounded-full object-cover border-4 border-emerald-100 shadow-sm"
+            />
           </div>
-        ))}
+
+          <h4 className="text-lg font-semibold text-gray-800 mt-3">{n.name}</h4>
+          <p className="text-sm text-gray-500">{n.qualifications}</p>
+
+          <div className="flex items-center justify-center gap-2 mt-2 text-xs text-emerald-700 font-medium">
+            <Briefcase size={14} />
+            <span>
+              {n.yearsOfExperience} {n.yearsOfExperience === 1 ? 'Year' : 'Years'} Experience
+            </span>
+          </div>
+
+          {n.certifications?.length > 0 && (
+            <div className="flex flex-wrap justify-center mt-3 gap-2">
+              {n.certifications.map((cert) => (
+                <span
+                  key={cert}
+                  className="text-xs bg-emerald-50 text-emerald-700 px-3 py-1 rounded-full border border-emerald-100"
+                >
+                  {cert}
+                </span>
+              ))}
+            </div>
+          )}
+
+          <button className="mt-4 px-4 py-2 bg-emerald-600 text-white text-sm rounded-full hover:bg-emerald-700 transition">
+            Consult me
+          </button>
+        </div>
       </div>
+    ))}
+  </div>
+)}
+
 
 
       {/* Request Modal */}
