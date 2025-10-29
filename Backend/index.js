@@ -1,5 +1,5 @@
 import express from "express";
-import cors from "cors"; // ← add this
+import cors from "cors";
 import { } from "dotenv/config";
 import loaders from "./loaders/index.js";
 import config from "./config/index.js";
@@ -8,21 +8,27 @@ import path from "path";
 async function startServer() {
   const app = express();
 
-  // ---- ADD CORS MIDDLEWARE HERE ----
+  // ---- CORS ----
   app.use(cors({
-    origin: "http://localhost:5173", // your frontend URL
-    credentials: true, // if you need cookies/auth
+    origin: "http://localhost:5173",
+    credentials: true,
   }));
 
-  // Needed middlewares
-  app.use(express.json()); // parse JSON
-  app.use(express.urlencoded({ extended: true }));
+  // ---- JSON and URL Encoded parsers for NON file-upload routes ----
+  app.use(express.json({ limit: "50mb" }));
+  app.use(express.urlencoded({ limit: "50mb", extended: true }));
 
   await loaders.init({ expressApp: app });
 
   // ---- MOUNT ROUTES ----
+<<<<<<< HEAD
+  // Make sure multer is applied **inside your route** that handles file uploads
+  app.use("/api", userRoute); // e.g., /api/register
+
+=======
   app.use("/api", userRoute);  // now /api/login, /api/register, /api/mealGen
   app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
+>>>>>>> 4467d8ad442453c4b807ab7f0fabb9654a8ff965
   const server = app.listen(config.env.port, () =>
     console.log(`Server Started ~ :${config.env.port}`)
   );

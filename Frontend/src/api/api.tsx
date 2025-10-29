@@ -1,4 +1,3 @@
-
 // Base API configuration
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
@@ -98,8 +97,6 @@ interface GroceryItem {
     category: string;
 }
 
-
-
 interface Dish {
     _id?: string;
     name: string;
@@ -185,7 +182,6 @@ const handleResponse = async (response: Response): Promise<ApiResponse> => {
     }));
 
     if (!response.ok) {
-        // Prefer `data` if it's a string message like "User already exist"
         const errorMessage = typeof json.data === 'string'
             ? json.data
             : json?.meta?.message || `HTTP error! status: ${response.status}`;
@@ -203,6 +199,25 @@ class ApiService {
         this.baseUrl = baseUrl;
     }
 
+<<<<<<< HEAD
+ async register(userData: any, isMultipart = false): Promise<ApiResponse> {
+    const headers = isMultipart ? getAuthHeaders() : getAuthHeaders();
+    
+    // Don't set Content-Type for FormData; browser sets it automatically
+    if (!isMultipart) {
+        headers['Content-Type'] = 'application/json';
+        userData = JSON.stringify(userData);
+    }
+
+    const response = await fetch(`${this.baseUrl}/register`, {
+        method: 'POST',
+        headers,
+        body: userData,
+    });
+
+    return handleResponse(response);
+}
+=======
     // Register user
     // ✅ FIXED register method
     async register(userData: any): Promise<ApiResponse> {
@@ -242,6 +257,23 @@ class ApiService {
         }
         return result;
     }
+>>>>>>> 4467d8ad442453c4b807ab7f0fabb9654a8ff965
+
+
+    // Login user
+    async login(credentials: LoginData): Promise<ApiResponse> {
+        const response = await fetch(`${this.baseUrl}/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: credentials.email, password: credentials.password }),
+        });
+
+        const result = await handleResponse(response);
+        if (result.data?.token) {
+            localStorage.setItem('authToken', result.data.token);
+        }
+        return result;
+    }
 
     // Get user profile
     async getUserProfile(): Promise<ApiResponse> {
@@ -249,7 +281,6 @@ class ApiService {
             method: 'GET',
             headers: getAuthHeaders(),
         });
-
         return handleResponse(response);
     }
 
@@ -258,27 +289,24 @@ class ApiService {
         const response = await fetch(`${this.baseUrl}/profile/update`, {
             method: 'PATCH',
             headers: getAuthHeaders(),
-
             body: JSON.stringify(userData),
         });
-
         return handleResponse(response);
     }
+
     async updateUserAdmin(id: string, userData: any): Promise<ApiResponse> {
         const response = await fetch(`${this.baseUrl}/update/${id}`, {
             method: 'PATCH',
             headers: getAuthHeaders(),
-
             body: JSON.stringify(userData),
         });
-
         return handleResponse(response);
     }
+
     async deleteUser(id: string): Promise<ApiResponse> {
         const response = await fetch(`${this.baseUrl}/${id}`, {
             method: 'DELETE',
         });
-
         return handleResponse(response);
     }
 
@@ -288,29 +316,22 @@ class ApiService {
     }
 
     async getAllUsers(): Promise<ApiResponse> {
-
         const url = `${this.baseUrl}/all`;
-
         const response = await fetch(url, {
             method: 'GET',
-            headers: { 'Content-Type': 'application/json' }, // No auth required for public routes
+            headers: { 'Content-Type': 'application/json' },
         });
-
         return handleResponse(response);
     }
 
-
-    // Get single user by ID (Public route)
     async getUserById(id: string): Promise<ApiResponse> {
         const response = await fetch(`${this.baseUrl}/${id}`, {
             method: 'GET',
-            headers: { 'Content-Type': 'application/json' }, // No auth required for public routes
+            headers: { 'Content-Type': 'application/json' },
         });
-
         return handleResponse(response);
     }
 
-    // Generate meal plan
     async generateMealPlan(userProfile: GenerateMeal): Promise<ApiResponse> {
         const response = await fetch(`${this.baseUrl}/mealGen`, {
             method: 'POST',
@@ -320,7 +341,6 @@ class ApiService {
         return handleResponse(response);
     }
 
-    // Get recipe recommendations based on available ingredients
     async getRecipeRecommendations(requestData: RecipeRecommendationRequest): Promise<ApiResponse> {
         const response = await fetch(`${this.baseUrl}/recipe`, {
             method: 'POST',
@@ -330,7 +350,6 @@ class ApiService {
         return handleResponse(response);
     }
 
-    // Generate grocery list from meal plan
     async generateGroceryList(requestData: GroceryListRequest): Promise<ApiResponse> {
         const response = await fetch(`${this.baseUrl}/grocery`, {
             method: 'POST',
@@ -340,42 +359,30 @@ class ApiService {
         return handleResponse(response);
     }
 
-    // Check if user is authenticated
     isAuthenticated(): boolean {
         return !!localStorage.getItem('authToken');
     }
 
-    // Get stored token
     getToken(): string | null {
         return localStorage.getItem('authToken');
     }
 
-
     // DISH-RELATED METHODS
-
-    // Get all dishes with optional filters (Public route)
     async getAllDishes(filters?: DishFilters): Promise<ApiResponse> {
         const queryParams = new URLSearchParams();
-
         if (filters) {
             Object.entries(filters).forEach(([key, value]) => {
-                if (value !== undefined) {
-                    queryParams.append(key, value.toString());
-                }
+                if (value !== undefined) queryParams.append(key, value.toString());
             });
         }
-
         const url = `${this.baseUrl}/dish/all${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
-
         const response = await fetch(url, {
             method: 'GET',
-            headers: { 'Content-Type': 'application/json' }, // No auth required for public routes
+            headers: { 'Content-Type': 'application/json' },
         });
-
         return handleResponse(response);
     }
 
-    // Get all meals for authenticated user
     async getUserDish(): Promise<ApiResponse> {
         const response = await fetch(`${this.baseUrl}/dish`, {
             method: 'GET',
@@ -384,93 +391,74 @@ class ApiService {
         return handleResponse(response);
     }
 
-    // Get single dish by ID (Public route)
     async getDishById(id: string): Promise<ApiResponse> {
         const response = await fetch(`${this.baseUrl}/dish/${id}`, {
             method: 'GET',
-            headers: { 'Content-Type': 'application/json' }, // No auth required for public routes
+            headers: { 'Content-Type': 'application/json' },
         });
-
         return handleResponse(response);
     }
 
-    // Add new dish (Protected route - requires authentication)
     async addDish(dishData: Dish): Promise<ApiResponse> {
         const response = await fetch(`${this.baseUrl}/dish`, {
             method: 'POST',
             headers: getAuthHeaders(),
             body: JSON.stringify(dishData),
         });
-
         return handleResponse(response);
     }
 
-    // Update dish (Protected route - requires authentication)
     async updateDish(id: string, dishData: Partial<Dish>): Promise<ApiResponse> {
         const response = await fetch(`${this.baseUrl}/dish/${id}`, {
             method: 'PUT',
             headers: getAuthHeaders(),
             body: JSON.stringify({ ...dishData, id }),
         });
-
         return handleResponse(response);
     }
 
-    // Delete dish (Protected route - requires authentication)
     async deleteDish(id: string): Promise<ApiResponse> {
         const response = await fetch(`${this.baseUrl}/dish/${id}`, {
             method: 'DELETE',
             headers: getAuthHeaders(),
         });
-
         return handleResponse(response);
     }
 
-    // Search dishes by name, description, or tags (Public route)
     async searchDishes(searchTerm: string): Promise<ApiResponse> {
         const response = await fetch(`${this.baseUrl}/dish/search?q=${encodeURIComponent(searchTerm)}`, {
             method: 'GET',
-            headers: { 'Content-Type': 'application/json' }, // No auth required for public routes
+            headers: { 'Content-Type': 'application/json' },
         });
-
         return handleResponse(response);
     }
 
-    // Get dishes by meal type (Public route)
     async getDishesByMealType(mealType: string): Promise<ApiResponse> {
         const response = await fetch(`${this.baseUrl}/dish/meal-type/${mealType}`, {
             method: 'GET',
-            headers: { 'Content-Type': 'application/json' }, // No auth required for public routes
+            headers: { 'Content-Type': 'application/json' },
         });
-
         return handleResponse(response);
     }
 
-    // Get dishes by dietary preferences (Public route)
     async getDishesByDietaryPreferences(preferences: DietaryPreferences): Promise<ApiResponse> {
         const queryParams = new URLSearchParams();
-
         if (preferences.vegetarian) queryParams.append('vegetarian', 'true');
         if (preferences.vegan) queryParams.append('vegan', 'true');
         if (preferences.gluten_free) queryParams.append('gluten_free', 'true');
         if (preferences.dairy_free) queryParams.append('dairy_free', 'true');
         if (preferences.keto) queryParams.append('keto', 'true');
-
         const url = `${this.baseUrl}/dish/dietary-preferences${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
-
         const response = await fetch(url, {
             method: 'GET',
-            headers: { 'Content-Type': 'application/json' }, // No auth required for public routes
+            headers: { 'Content-Type': 'application/json' },
         });
-
         return handleResponse(response);
     }
 
     // MEAL-RELATED METHODS
-
-    // Create new meal plan
     async createMealPlan(mealData: MealPlanData): Promise<ApiResponse> {
-        console.log("mealData", mealData)
+        console.log("mealData", mealData);
         const response = await fetch(`${this.baseUrl}/meal`, {
             method: 'POST',
             headers: getAuthHeaders(),
@@ -479,7 +467,6 @@ class ApiService {
         return handleResponse(response);
     }
 
-    // Get all meals for authenticated user
     async getUserMeals(): Promise<ApiResponse> {
         const response = await fetch(`${this.baseUrl}/meal`, {
             method: 'GET',
@@ -488,7 +475,6 @@ class ApiService {
         return handleResponse(response);
     }
 
-    // Get meal by ID
     async getMealById(id: string): Promise<ApiResponse> {
         const response = await fetch(`${this.baseUrl}/meal/${id}`, {
             method: 'GET',
@@ -497,21 +483,15 @@ class ApiService {
         return handleResponse(response);
     }
 
-
     async getAllMeals(): Promise<ApiResponse> {
-
         const url = `${this.baseUrl}/meal/all`;
-
         const response = await fetch(url, {
             method: 'GET',
-            headers: { 'Content-Type': 'application/json' }, // No auth required for public routes
+            headers: { 'Content-Type': 'application/json' },
         });
-
         return handleResponse(response);
     }
 
-
-    // Update meal plan
     async updateMealPlan(id: string, mealData: Partial<MealPlanData>): Promise<ApiResponse> {
         const response = await fetch(`${this.baseUrl}/meal/${id}`, {
             method: 'PUT',
@@ -521,7 +501,6 @@ class ApiService {
         return handleResponse(response);
     }
 
-    // Delete meal plan
     async deleteMealPlan(id: string): Promise<ApiResponse> {
         const response = await fetch(`${this.baseUrl}/meal/${id}`, {
             method: 'DELETE',
@@ -530,7 +509,6 @@ class ApiService {
         return handleResponse(response);
     }
 
-    // Get meal by specific date
     async getMealByDate(date: string): Promise<ApiResponse> {
         const response = await fetch(`${this.baseUrl}/meal/date/${date}`, {
             method: 'GET',
@@ -539,13 +517,8 @@ class ApiService {
         return handleResponse(response);
     }
 
-    // Get meals by date range
     async getMealsByDateRange(startDate: string, endDate: string): Promise<ApiResponse> {
-        const queryParams = new URLSearchParams({
-            startDate,
-            endDate,
-        });
-
+        const queryParams = new URLSearchParams({ startDate, endDate });
         const response = await fetch(`${this.baseUrl}/meal/range/meals?${queryParams.toString()}`, {
             method: 'GET',
             headers: getAuthHeaders(),
@@ -553,12 +526,8 @@ class ApiService {
         return handleResponse(response);
     }
 
-    // Get weekly meal plan
     async getWeeklyMealPlan(startDate: string): Promise<ApiResponse> {
-        const queryParams = new URLSearchParams({
-            startDate,
-        });
-
+        const queryParams = new URLSearchParams({ startDate });
         const response = await fetch(`${this.baseUrl}/meal/weekly/plan?${queryParams.toString()}`, {
             method: 'GET',
             headers: getAuthHeaders(),
@@ -566,28 +535,20 @@ class ApiService {
         return handleResponse(response);
     }
 
-    // Get nutrition summary for date range
     async getNutritionSummary(startDate: string, endDate: string): Promise<ApiResponse> {
-        const queryParams = new URLSearchParams({
-            startDate,
-            endDate,
-        });
-
+        const queryParams = new URLSearchParams({ startDate, endDate });
         const response = await fetch(`${this.baseUrl}/meal/nutrition/summary?${queryParams.toString()}`, {
             method: 'GET',
             headers: getAuthHeaders(),
         });
         return handleResponse(response);
     }
-
-
-
 }
 
 // Export singleton instance
 export const apiService = new ApiService();
 
-// Export types for use in components
+// Export types
 export type {
     RegisterData,
     LoginData,

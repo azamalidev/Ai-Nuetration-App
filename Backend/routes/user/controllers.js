@@ -14,6 +14,14 @@ register: async (req, res) => {
   try {
     let imageUrl = null;
 
+<<<<<<< HEAD
+  if (req.file) {
+  const stream = cloudinary.uploader.upload_stream(
+    { folder: "nutritionists" },
+    (error, result) => {
+      if (error) return reject(error);
+      resolve(result.secure_url); // This URL can be saved in DB
+=======
     if (req.file) {
       const uploadDir = path.join("uploads", "profileImages");
       if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
@@ -26,7 +34,16 @@ register: async (req, res) => {
 
       // URL to serve image
       imageUrl = `/uploads/profileImages/${fileName}`;
+>>>>>>> 4467d8ad442453c4b807ab7f0fabb9654a8ff965
     }
+  );
+
+  const bufferStream = new (require("stream").Readable)();
+  bufferStream.push(req.file.buffer);
+  bufferStream.push(null);
+  bufferStream.pipe(stream);
+}
+
 
     const userData = {
       ...req.body,
