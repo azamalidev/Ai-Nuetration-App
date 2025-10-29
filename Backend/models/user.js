@@ -10,6 +10,7 @@ const schema = Schema({
   dietaryPreferance: { type: String, required: false, maxlength: 50 },
   healthGoal: { type: String, required: false, maxlength: 50 },
   activityLevel: { type: String, required: false, maxlength: 50 },
+   profileImage: { type: String, default: '' }, // 👈 Add this line
   email: { type: String, required: true, maxlength: 50, unique: true },
   password: { type: String, required: true, maxlength: 5000 },
   role: {

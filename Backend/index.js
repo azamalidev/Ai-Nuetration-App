@@ -1,11 +1,18 @@
 import express from "express";
+import cors from "cors"; // ← add this
 import { } from "dotenv/config";
 import loaders from "./loaders/index.js";
 import config from "./config/index.js";
-import userRoute from "./routes/user/index.js"; // import your user routes
+import userRoute from "./routes/user/index.js";
 
 async function startServer() {
   const app = express();
+
+  // ---- ADD CORS MIDDLEWARE HERE ----
+  app.use(cors({
+    origin: "http://localhost:5173", // your frontend URL
+    credentials: true, // if you need cookies/auth
+  }));
 
   // Needed middlewares
   app.use(express.json()); // parse JSON
@@ -14,12 +21,7 @@ async function startServer() {
   await loaders.init({ expressApp: app });
 
   // ---- MOUNT ROUTES ----
-  // unprotected routes
   app.use("/api", userRoute);  // now /api/login, /api/register, /api/mealGen
-
-  // If you have protected routes:
-  // import { protectedRouter } from "./routes/index.js";
-  // app.use("/api", protectedRouter);
 
   const server = app.listen(config.env.port, () =>
     console.log(`Server Started ~ :${config.env.port}`)

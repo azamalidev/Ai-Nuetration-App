@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthContext } from '../authContext';
 
+
 interface AuthFormProps {
   type: 'login' | 'register';
 }
@@ -14,6 +15,9 @@ export function AuthForm({ type }: AuthFormProps) {
   const [role, setRole] = useState('USER');
   const [name, setName] = useState('');
   const [bio, setBio] = useState('');
+  const [certifications, setCertifications] = useState('');
+
+const [profileImage, setProfileImage] = useState<File | null>(null);
 
   const [yearsOfExperience, setYearsOfExperience] = useState('');
   const [specialization, setSpecialization] = useState('');
@@ -40,15 +44,63 @@ export function AuthForm({ type }: AuthFormProps) {
           };
 
           // Add nutritionist-specific fields if role is NUTRITIONIST
-          if (role === 'NUTRITIONIST') {
-            if (bio) registerData.bio = bio;
-            if (certifications) registerData.certifications = certifications.split(',').map(cert => cert.trim());
-            if (yearsOfExperience) registerData.yearsOfExperience = parseInt(yearsOfExperience);
-            if (specialization) registerData.specialization = specialization;
-            if (qualifications) registerData.qualifications = qualifications;
-          }
+       if (role === 'NUTRITIONIST') {
+  if (bio) registerData.bio = bio;
+  if (certifications) registerData.certifications = certifications.split(',').map(cert => cert.trim());
+  if (yearsOfExperience) registerData.yearsOfExperience = parseInt(yearsOfExperience);
+  if (specialization) registerData.specialization = specialization;
+  if (qualifications) registerData.qualifications = qualifications;
 
-          const response = await apiService.register(registerData);
+  // 🖼️ Handle profile image upload (only for Nutritionist)
+  if (profileImage) {
+    const formData = new FormData();
+
+    // Append all nutritionist fields to FormData
+    Object.entries(registerData).forEach(([key, value]) => {
+      if (Array.isArray(value)) {
+        value.forEach((v) => formData.append(key, v));
+      } else if (value !== undefined && value !== null) {
+        formData.append(key, value as string);
+      }
+    });
+
+    // Append the uploaded image file
+    formData.append('profileImage', profileImage);
+
+    // Make the multipart/form-data request
+    const response = await apiService.register(formData, true);
+    console.log("Register response:", response);
+
+    setSuccessMessage('Registration successful! You can now sign in.');
+    setEmail('');
+    setPassword('');
+    setRole('USER');
+    setName('');
+    setBio('');
+    setCertifications('');
+    setYearsOfExperience('');
+    setSpecialization('');
+    setQualifications('');
+    setProfileImage(null);
+    setTimeout(() => navigate('/login'), 1500);
+    return; // stop further code execution
+  }
+}
+
+const formData = new FormData();
+Object.entries(registerData).forEach(([key, value]) => {
+  if (Array.isArray(value)) {
+    value.forEach((v) => formData.append(key, v));
+  } else if (value !== undefined && value !== null) {
+    formData.append(key, value as string);
+  }
+});
+
+if (profileImage) {
+  formData.append("profileImage", profileImage);
+}
+
+const response = await apiService.register(formData, true); // pass multipart flag
           console.log("Register response:", response);
 
           setSuccessMessage('Registration successful! You can now sign in.');
@@ -264,6 +316,22 @@ export function AuthForm({ type }: AuthFormProps) {
               )}
             </>
           )}
+{type === 'register' && role === 'NUTRITIONIST' && (
+  <div>
+    <label htmlFor="profileImage" className="block text-sm font-medium text-gray-700 mb-1">
+      Upload Profile Image
+    </label>
+    <input
+      id="profileImage"
+      name="profileImage"
+      type="file"
+      accept="image/*"
+      className="appearance-none relative block w-full px-3 py-2 border border-gray-300 text-gray-900 rounded-md focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 focus:z-10 sm:text-sm"
+      onChange={(e) => setProfileImage(e.target.files?.[0] || null)}
+    />
+  </div>
+)}
+
 
           <div>
             <label htmlFor="email-address" className="block text-sm font-medium text-gray-700 mb-1">
