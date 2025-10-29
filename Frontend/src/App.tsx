@@ -13,7 +13,7 @@ import StreamVideoProvider from "./providers/StreamProvider";
 
 // Axios setup
 const api = axios.create({
-  baseURL: "http://localhost:5000",
+  baseURL: "http://localhost:50001",
 });
 
 api.interceptors.request.use((config) => {

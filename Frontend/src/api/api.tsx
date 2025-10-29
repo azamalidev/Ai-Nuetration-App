@@ -1,5 +1,5 @@
 // Base API configuration
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:50001';
 
 // Types for API responses
 interface ApiResponse {
@@ -199,7 +199,7 @@ class ApiService {
         this.baseUrl = baseUrl;
     }
 
-<<<<<<< HEAD
+
  async register(userData: any, isMultipart = false): Promise<ApiResponse> {
     const headers = isMultipart ? getAuthHeaders() : getAuthHeaders();
     
@@ -217,31 +217,8 @@ class ApiService {
 
     return handleResponse(response);
 }
-=======
-    // Register user
-    // ✅ FIXED register method
-    async register(userData: any): Promise<ApiResponse> {
-        let options: RequestInit;
 
-        if (userData instanceof FormData) {
-            // Handle multipart/form-data (for image upload)
-            options = {
-                method: 'POST',
-                body: userData, // do NOT stringify
-                // ❌ do not set Content-Type manually — browser will set it with boundary
-            };
-        } else {
-            // Handle normal JSON requests
-            options = {
-                method: 'POST',
-                headers: getAuthHeaders(),
-                body: JSON.stringify(userData),
-            };
-        }
-
-        const response = await fetch(`${this.baseUrl}/register`, options);
-        return handleResponse(response);
-    }
+  
 
 
     async login(credentials: LoginData): Promise<ApiResponse> {
@@ -257,23 +234,10 @@ class ApiService {
         }
         return result;
     }
->>>>>>> 4467d8ad442453c4b807ab7f0fabb9654a8ff965
 
 
-    // Login user
-    async login(credentials: LoginData): Promise<ApiResponse> {
-        const response = await fetch(`${this.baseUrl}/login`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email: credentials.email, password: credentials.password }),
-        });
 
-        const result = await handleResponse(response);
-        if (result.data?.token) {
-            localStorage.setItem('authToken', result.data.token);
-        }
-        return result;
-    }
+   
 
     // Get user profile
     async getUserProfile(): Promise<ApiResponse> {

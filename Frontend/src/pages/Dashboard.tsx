@@ -94,21 +94,39 @@ const handleFoodUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
   const file = e.target.files?.[0];
   if (!file) return;
 
-  const token = localStorage.getItem("token");
-  const formData = new FormData();
-  formData.append("image", file); // must match backend's upload.single("image")
+  setFoodFile(file);
+  setFoodImage(URL.createObjectURL(file));
+  setAnalysisLoading(true);
+  setAnalysisError(null);
+  setAnalysisResult(null);
 
-  const res = await fetch("http://localhost:5000/api/analyzeFood", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${token}`, // include token
-    },
-    body: formData,
-  });
+  try {
+    const token = localStorage.getItem("token");
+    const formData = new FormData();
+    formData.append("image", file);
 
-  const data = await res.json();
-  console.log("response", data);
+    const res = await fetch("http://localhost:50001/api/analyzeFood", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      body: formData,
+    });
+
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(text || "Failed to analyze food");
+    }
+
+    const data = await res.json();
+    setAnalysisResult(data);
+  } catch (err: any) {
+    setAnalysisError(err.message || "Analysis failed");
+  } finally {
+    setAnalysisLoading(false);
+  }
 };
+
 
 
 
