@@ -4,7 +4,7 @@ import { } from "dotenv/config";
 import loaders from "./loaders/index.js";
 import config from "./config/index.js";
 import userRoute from "./routes/user/index.js";
-
+import path from "path";
 async function startServer() {
   const app = express();
 
@@ -22,7 +22,7 @@ async function startServer() {
 
   // ---- MOUNT ROUTES ----
   app.use("/api", userRoute);  // now /api/login, /api/register, /api/mealGen
-
+  app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
   const server = app.listen(config.env.port, () =>
     console.log(`Server Started ~ :${config.env.port}`)
   );
