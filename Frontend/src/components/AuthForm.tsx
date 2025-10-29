@@ -65,18 +65,9 @@ export function AuthForm({ type }: AuthFormProps) {
           }
         });
 
-        if (profileImage) {
-          formData.append("profileImage", profileImage); // 👈 must match backend field
-        }
+       
 
-        console.log(
-          "Register data before FormData:",
-          registerData,
-          formData,
-          "Profile Image:",
-          profileImage
-        );
-
+      
         // 🔥 make sure apiService.register uses axios without manual content-type
         const response = await apiService.register(formData, true);
         console.log("Register response:", response);

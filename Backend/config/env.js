@@ -1,5 +1,5 @@
 const environment = {
-  port: process.env.PORT || 50001,
+  port: process.env.PORT || 5000,
   nodeEnv: process.env.NODE_ENV || "development",
   mongodbUri: process.env.DB_URI || "mongodb+srv://zainabsarwar58:zainab984@cluster0.zjkfo.mongodb.net/mydatabase?retryWrites=true&w=majority&appName=Cluster0",
   

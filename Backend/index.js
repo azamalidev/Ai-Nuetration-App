@@ -18,7 +18,7 @@ async function startServer() {
 app.use('/api/getCallToken', getCallTokenRoute);
 
 app.listen(50001, () => {
-  console.log('Server running on port 50001');
+  console.log('Server running on port 5000');
 });
   // ---- JSON and URL Encoded parsers for NON file-upload routes ----
   app.use(express.json({ limit: "50mb" }));
