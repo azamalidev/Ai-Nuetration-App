@@ -16,6 +16,10 @@ router.patch("/consultation/updateStatus", authenticate, controllers.updateConsu
 
 router.post("/login", validate(authValidation.login.body), controllers.login);
 router.post("/register", upload.single("profileImage"), controllers.register);
+
+
+
+router.get("/get-docter-list", controllers.getNutratious);
 router.get("/profile", authenticate, controllers.userProfile);
 router.patch("/profile/update", authenticate, validate(authValidation.update), controllers.update);
 router.patch("/update/:id", controllers.updateAdmin);

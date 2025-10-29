@@ -18,9 +18,8 @@ import Admin from "./pages/Admin";
 import Dash from "./AdminPanel/pages/Dashboard";
 import StreamVideoProvider from "./providers/StreamProvider";
 
-// Axios setup
 const api = axios.create({
-  baseURL: "http://localhost:50001",
+  baseURL: import.meta.env.VITE_API_URL || "http://localhost:5000",
 });
 
 api.interceptors.request.use((config) => {
@@ -29,11 +28,8 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// ✅ Private Route
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading } = useAuthContext();
-
-  console.log("🔐 PrivateRoute:", { isLoading, isAuthenticated });
 
   if (isLoading) {
     return (
@@ -46,26 +42,19 @@ function PrivateRoute({ children }: { children: React.ReactNode }) {
     );
   }
 
-  if (!isAuthenticated) {
-    console.log("❌ Not authenticated, redirecting to login");
-    return <Navigate to="/login" replace />;
-  }
-
-  console.log("✅ Authenticated, rendering page");
-  return <>{children}</>;
+  return isAuthenticated ? <>{children}</> : <Navigate to="/login" replace />;
 }
 
-// ✅ Main App
 function App() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-50">
       <Routes>
-        {/* PUBLIC ROUTES */}
+        {/* ---------- PUBLIC ROUTES ---------- */}
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<Auth />} />
         <Route path="/register" element={<Auth />} />
 
-        {/* PROTECTED ROUTES */}
+        {/* ---------- PROTECTED ROUTES ---------- */}
         <Route
           path="/profile"
           element={
@@ -74,7 +63,6 @@ function App() {
             </PrivateRoute>
           }
         />
-
         <Route
           path="/admin"
           element={
@@ -83,7 +71,6 @@ function App() {
             </PrivateRoute>
           }
         />
-
         <Route
           path="/admindashboard"
           element={
@@ -92,8 +79,6 @@ function App() {
             </PrivateRoute>
           }
         />
-
-        {/* STREAM.IO WRAPPED ROUTE */}
         <Route
           path="/dashboard"
           element={

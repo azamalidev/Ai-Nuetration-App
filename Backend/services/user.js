@@ -32,6 +32,15 @@ const UserService = {
     }
   },
 
+  getNutratious: async () => {
+    try {
+      const data = await UserModel.find({ role: "NUTRITIONIST" }); // 👈 use .find()
+      return { message: "success", data };
+    } catch (error) {
+      return { message: "error", data: error.message };
+    }
+  },
+
   add: async (body) => {
     try {
       const data = await UserModel.findOne({ email: body.email });

@@ -5,36 +5,9 @@ import { useAuthContext } from '../authContext';
 import { StreamCall, useStreamVideoClient } from '@stream-io/video-react-sdk';
 import VideoConsultationRoom from './VideoConsultationRoom';
 import { Button } from './ui/button';
-import { Video, Phone, Clipboard, X } from 'lucide-react';
+import { Video, Phone, Clipboard, X, Briefcase } from 'lucide-react';
 
-const nutritionists = [
-  {
-    _id: '1',
-    name: 'Dr. Ayesha Khan',
-    specialty: 'Weight Loss',
-    experience: '10 years',
-    education: 'MBBS, Nutrition MSc',
-    certifications: ['Certified Nutritionist', 'Weight Loss Specialist'],
-    bio: 'Expert in holistic nutrition and personalized diet plans.',
-    photo: 'https://randomuser.me/api/portraits/women/68.jpg',
-    businessHours: 'Mon-Fri: 9AM - 5PM',
-    offDays: 'Sat, Sun',
-    languages: 'English, Urdu'
-  },
-  {
-    _id: '2',
-    name: 'Dr. Ali Raza',
-    specialty: 'Diabetes Management',
-    experience: '8 years',
-    education: 'MBBS, Diabetes Nutrition Diploma',
-    certifications: ['Certified Diabetes Educator'],
-    bio: 'Focus on diabetes, metabolism, and healthy lifestyle guidance.',
-    photo: 'https://randomuser.me/api/portraits/men/45.jpg',
-    businessHours: 'Mon-Fri: 10AM - 6PM',
-    offDays: 'Sat, Sun',
-    languages: 'English, Urdu, Arabic'
-  },
-];
+
 
 export default function VideoConsultation({ onClose }: { onClose?: () => void }) {
   const { user } = useAuthContext();
@@ -50,6 +23,41 @@ export default function VideoConsultation({ onClose }: { onClose?: () => void })
   const [requestTime, setRequestTime] = useState('');
   const [requestReason, setRequestReason] = useState('');
   const [consultationMode, setConsultationMode] = useState('Video'); // AI suggested
+
+
+  let [nutritionists, setNutritionists] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchNutritionists = async () => {
+      try {
+        const token = localStorage.getItem('authToken');
+        if (!token) {
+          console.error("You must be logged in to fetch nutritionists.");
+          return;
+        }
+
+        const baseUrl = import.meta.env.VITE_API_URL; // ✅ from .env
+
+        const res = await fetch(`${baseUrl}/get-docter-list`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          setNutritionists(data?.data || []);
+        } else {
+          console.error('Failed to fetch nutritionists');
+        }
+      } catch (error) {
+        console.error('Error fetching nutritionists:', error);
+      }
+    };
+
+    fetchNutritionists();
+  }, []);
 
   const startConsultation = async () => {
     if (!client || !user) return;
@@ -102,46 +110,46 @@ export default function VideoConsultation({ onClose }: { onClose?: () => void })
     setRequestModal(true);
   };
 
- const sendRequest = async () => {
-  if (!selectedNutritionist) return;
-  if (!requestTime || !requestReason) {
-    alert('Please enter time and reason for consultation');
-    return;
-  }
-
-  try {
-    const token = localStorage.getItem('token'); // or wherever you store it after login
-    if (!token) {
-      alert("You must be logged in to send a request.");
+  const sendRequest = async () => {
+    if (!selectedNutritionist) return;
+    if (!requestTime || !requestReason) {
+      alert('Please enter time and reason for consultation');
       return;
     }
 
-    const res = await fetch('http://localhost:50001/api/consultation/request', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}` // ← Add the JWT token here
-      },
-      body: JSON.stringify({
-        userId: user._id,
-        nutritionistId: selectedNutritionist._id,
-        time: requestTime,
-        reason: requestReason,
-        mode: consultationMode
-      }),
-    });
+    try {
+      const token = localStorage.getItem('authToken'); // or wherever you store it after login
+      if (!token) {
+        alert("You must be logged in to send a request.");
+        return;
+      }
 
-    if (res.ok) {
-      alert('Request sent successfully!');
-      setRequestModal(false);
-    } else {
-      const errorData = await res.json();
-      alert(errorData.error || 'Failed to send request');
+      const res = await fetch('http://localhost:50001/api/consultation/request', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}` // ← Add the JWT token here
+        },
+        body: JSON.stringify({
+          userId: user._id,
+          nutritionistId: selectedNutritionist._id,
+          time: requestTime,
+          reason: requestReason,
+          mode: consultationMode
+        }),
+      });
+
+      if (res.ok) {
+        alert('Request sent successfully!');
+        setRequestModal(false);
+      } else {
+        const errorData = await res.json();
+        alert(errorData.error || 'Failed to send request');
+      }
+    } catch (error) {
+      console.error(error);
     }
-  } catch (error) {
-    console.error(error);
-  }
-};
+  };
 
 
   useEffect(() => {
@@ -182,70 +190,179 @@ export default function VideoConsultation({ onClose }: { onClose?: () => void })
       </>
     );
   }
-
+  const baseUrl = import.meta.env.VITE_API_URL;
   return (
     <div className="p-6 bg-white rounded-lg shadow-md space-y-6">
       <h3 className="text-xl font-semibold mb-4">Video Consultation</h3>
 
       {/* Nutritionist Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mt-6">
-        {nutritionists.map(n => (
-          <div key={n._id} className="bg-white shadow rounded-lg cursor-pointer hover:shadow-lg transition transform hover:scale-105 hover:bg-emerald-50" onClick={() => openRequestModal(n)}>
-            <div className="p-4 flex flex-col items-center">
-              <img src={n.photo} alt={n.name} className="w-20 h-20 rounded-full mb-2 object-cover" />
-              <h4 className="text-md font-semibold text-center">{n.name}</h4>
-              <p className="text-sm text-gray-500 text-center">{n.specialty}</p>
-              <p className="text-xs text-gray-400 text-center mt-1">{n.experience}</p>
-              <div className="flex flex-wrap justify-center mt-2 gap-1">
-                {n.certifications.map(cert => <span key={cert} className="text-xs bg-emerald-100 text-emerald-800 px-2 py-1 rounded-full">{cert}</span>)}
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8 mt-8">
+        {nutritionists.map((n) => (
+          <div
+            key={n._id}
+            onClick={() => openRequestModal(n)}
+            className="bg-white rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 cursor-pointer border border-transparent hover:border-emerald-200"
+          >
+
+            <div className="p-6 flex flex-col items-center text-center">
+              <div className="relative">
+                <img
+                  src={`${baseUrl}${n.profileImage}`}
+                  alt={n.name}
+                  className="w-24 h-24 rounded-full object-cover border-4 border-emerald-100 shadow-sm"
+                />
               </div>
+
+              <h4 className="text-lg font-semibold text-gray-800 mt-3">{n.name}</h4>
+              <p className="text-sm text-gray-500">{n.qualifications}</p>
+
+              <div className="flex items-center justify-center gap-2 mt-2 text-xs text-emerald-700 font-medium">
+                <Briefcase size={14} />
+                <span>
+                  {n.yearsOfExperience} {n.yearsOfExperience === 1 ? "Year" : "Years"} Experience
+                </span>
+              </div>
+
+              {n.certifications?.length > 0 && (
+                <div className="flex flex-wrap justify-center mt-3 gap-2">
+                  {n.certifications.map((cert) => (
+                    <span
+                      key={cert}
+                      className="text-xs bg-emerald-50 text-emerald-700 px-3 py-1 rounded-full border border-emerald-100"
+                    >
+                      {cert}
+                    </span>
+                  ))}
+                </div>
+              )}
+
+              <button className="mt-4 px-4 py-2 bg-emerald-600 text-white text-sm rounded-full hover:bg-emerald-700 transition">
+                View Profile
+              </button>
             </div>
           </div>
         ))}
       </div>
 
+
       {/* Request Modal */}
       {requestModal && selectedNutritionist && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
-          <div className="bg-white rounded-lg shadow-lg max-w-md w-full p-6 relative overflow-y-auto max-h-[90vh]">
-            <button className="absolute top-2 right-2 text-gray-600 hover:text-gray-900" onClick={() => setRequestModal(false)}><X className="h-5 w-5" /></button>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-6 relative overflow-y-auto max-h-[90vh] transition-all">
+            {/* Close Button */}
+            <button
+              className="absolute top-3 right-3 text-gray-500 hover:text-emerald-700 transition"
+              onClick={() => setRequestModal(false)}
+            >
+              <X className="h-6 w-6" />
+            </button>
 
-            <div className="bg-emerald-50 rounded-lg p-4 mb-4">
-              <div className="flex items-center gap-4 mb-2">
-                <img src={selectedNutritionist.photo} alt={selectedNutritionist.name} className="w-24 h-24 rounded-full object-cover" />
+            {/* Header / Doctor Info */}
+            <div className="bg-emerald-50 rounded-xl p-5 mb-5 border border-emerald-100">
+              <div className="flex items-center gap-4 mb-3">
+                <img
+                  src={`${baseUrl}${selectedNutritionist.profileImage}`}
+                  alt={selectedNutritionist.name}
+                  className="w-20 h-20 rounded-full object-cover border-4 border-white shadow-md"
+                />
                 <div>
-                  <h2 className="text-lg font-semibold text-emerald-800">{selectedNutritionist.name}</h2>
-                  <p className="text-sm text-gray-600">{selectedNutritionist.specialty}</p>
-                  <p className="text-xs text-gray-500">{selectedNutritionist.experience}</p>
+                  <h2 className="text-xl font-semibold text-emerald-800">
+                    {selectedNutritionist.name}
+                  </h2>
+                  <p className="text-sm text-gray-600">{selectedNutritionist.qualifications}</p>
+                  <p className="text-xs text-gray-500">
+                    {selectedNutritionist.yearsOfExperience}{" "}
+                    {selectedNutritionist.yearsOfExperience === 1 ? "Year" : "Years"} Experience
+                  </p>
                 </div>
               </div>
-              <p className="text-sm mb-1"><span className="font-semibold">Education:</span> {selectedNutritionist.education}</p>
-              <p className="text-sm mb-1"><span className="font-semibold">Certifications:</span> {selectedNutritionist.certifications.join(', ')}</p>
-              <p className="text-sm mb-1"><span className="font-semibold">Business Hours:</span> {selectedNutritionist.businessHours}</p>
-              <p className="text-sm mb-1"><span className="font-semibold">Off Days:</span> {selectedNutritionist.offDays}</p>
-              <p className="text-sm mb-1"><span className="font-semibold">Languages:</span> {selectedNutritionist.languages}</p>
-              <p className="text-sm mb-3">{selectedNutritionist.bio}</p>
+             <hr className="border-t-4 border-[#059669] my-4 rounded-full" />
+
+
+              <div className="grid grid-cols-1 gap-2 text-sm text-gray-700">
+                <p>
+                  <span className="font-semibold text-emerald-700">Specialization:</span>{" "}
+                  {selectedNutritionist.specialization || "N/A"}
+                </p>
+                <p>
+                  <span className="font-semibold text-emerald-700">Certifications:</span>{" "}
+                  {selectedNutritionist.certifications?.join(", ") || "None"}
+                </p>
+               
+                <p>
+                  <span className="font-semibold text-emerald-700">Email:</span>{" "}
+                  {selectedNutritionist.email || "N/A"}
+                </p>
+               
+              </div>
+
+              {selectedNutritionist.bio && (
+                <p className="text-sm text-gray-600 mt-3 italic leading-relaxed border-t border-emerald-100 pt-3">
+                  “{selectedNutritionist.bio}”
+                </p>
+              )}
             </div>
 
-            <label className="block text-sm font-medium mb-1">Preferred Time</label>
-            <input type="time" value={requestTime} onChange={e => setRequestTime(e.target.value)} className="w-full border rounded px-3 py-2 mb-3" />
+            {/* Form Fields */}
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Preferred Time
+                </label>
+                <input
+                  type="time"
+                  value={requestTime}
+                  onChange={(e) => setRequestTime(e.target.value)}
+                  className="w-full border border-gray-300 focus:border-emerald-400 focus:ring-emerald-300 rounded-lg px-3 py-2 text-sm outline-none transition"
+                />
+              </div>
 
-            <label className="block text-sm font-medium mb-1">Reason</label>
-            <textarea placeholder="Your reason" value={requestReason} onChange={e => setRequestReason(e.target.value)} className="w-full border rounded px-3 py-2 mb-3" />
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Reason for Consultation
+                </label>
+                <textarea
+                  placeholder="Describe your reason..."
+                  value={requestReason}
+                  onChange={(e) => setRequestReason(e.target.value)}
+                  className="w-full border border-gray-300 focus:border-emerald-400 focus:ring-emerald-300 rounded-lg px-3 py-2 text-sm h-24 outline-none transition resize-none"
+                />
+              </div>
 
-            <label className="block text-sm font-medium mb-1">Consultation Mode</label>
-            <select value={consultationMode} onChange={e => setConsultationMode(e.target.value)} className="w-full border rounded px-3 py-2 mb-4">
-              <option>Video</option>
-              <option>Chat</option>
-            </select>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Consultation Mode
+                </label>
+                <select
+                  value={consultationMode}
+                  onChange={(e) => setConsultationMode(e.target.value)}
+                  className="w-full border border-gray-300 focus:border-emerald-400 focus:ring-emerald-300 rounded-lg px-3 py-2 text-sm outline-none transition"
+                >
+                  <option>Video</option>
+                  <option>Chat</option>
+                </select>
+              </div>
+            </div>
 
-            <div className="flex justify-end gap-2">
-              <Button onClick={sendRequest} className="bg-emerald-600 hover:bg-emerald-700">Send Request</Button>
-              <Button onClick={() => setRequestModal(false)} variant="outline">Cancel</Button>
+            {/* Footer Buttons */}
+            <div className="flex justify-end gap-3 mt-6">
+              <button
+                onClick={sendRequest}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium px-5 py-2 rounded-full shadow-sm transition"
+              >
+                Send Request
+              </button>
+              <button
+                onClick={() => setRequestModal(false)}
+                className="border border-gray-300 hover:border-gray-400 text-gray-600 text-sm font-medium px-5 py-2 rounded-full transition"
+              >
+                Cancel
+              </button>
             </div>
           </div>
         </div>
       )}
+
 
       {/* Pending Requests */}
       {user?.role === 'nutritionist' && pendingRequests.length > 0 && (

@@ -68,6 +68,15 @@ const controller = {
     }
   },
 
+   getNutratious: async (req, res) => {
+    const data = await UserService.getNutratious(req.body);
+    if (data.message === "success") {
+      return httpResponse.SUCCESS(res, data.data);
+    } else {
+      return httpResponse.NOT_FOUND(res, data.data, data.data);
+    }
+  },
+
   userProfile: async (req, res) => {
     try {
       const data = await UserService.UserProfile(req.user._id);

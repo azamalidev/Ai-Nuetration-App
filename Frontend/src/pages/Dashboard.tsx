@@ -4,7 +4,6 @@ import 'react-toastify/dist/ReactToastify.css';
 import { useAuthContext } from '../authContext';
 import React, { useState, useEffect } from 'react';
 import { Brain, Camera, ShoppingCart, Utensils, Video, Plus, X } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
 import {
   apiService,
   MealPlan,
@@ -20,11 +19,11 @@ import VideoConsultation from '../components/VideoConsultation';
 
 const Dashboard = () => {
   const [foodImage, setFoodImage] = useState<string | null>(null);
-const [foodFile, setFoodFile] = useState<File | null>(null);
+  const [foodFile, setFoodFile] = useState<File | null>(null);
 
-const [analysisResult, setAnalysisResult] = useState<any | null>(null);
-const [analysisLoading, setAnalysisLoading] = useState(false);
-const [analysisError, setAnalysisError] = useState<string | null>(null);
+  const [analysisResult, setAnalysisResult] = useState<any | null>(null);
+  const [analysisLoading, setAnalysisLoading] = useState(false);
+  const [analysisError, setAnalysisError] = useState<string | null>(null);
 
 
   const [selectedFeature, setSelectedFeature] = useState('meal-planning');
@@ -40,15 +39,15 @@ const [analysisError, setAnalysisError] = useState<string | null>(null);
   const [approvingRecipe, setApprovingRecipe] = useState<number | null>(null);
   const [approvedRecipes, setApprovedRecipes] = useState<number[]>([]);
   const [mealPlanApproved, setMealPlanApproved] = useState(false); // New state for tracking approval
-const [user, setUser] = useState<any | null>(null);
+  const [user, setUser] = useState<any | null>(null);
 
 
 
 
-  const navigate = useNavigate();
 
 
-  const { isLoading, isAuthenticated } = useAuthContext();
+
+  const { isLoading } = useAuthContext();
 
 
   const fetchProfile = async () => {
@@ -56,7 +55,7 @@ const [user, setUser] = useState<any | null>(null);
       setLoading(true);
       const { apiService } = await import('../api/api');
       const response = await apiService.getUserProfile();
-      console.log("response", response);
+    
 
       if (response?.data) {
         const userData = {
@@ -90,44 +89,44 @@ const [user, setUser] = useState<any | null>(null);
   }
 
   if (!user) {
-    return <div>No user data</div>;
+    return <div></div>;
   }
-const handleFoodUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-  const file = e.target.files?.[0];
-  if (!file) return;
+  const handleFoodUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
 
-  setFoodFile(file);
-  setFoodImage(URL.createObjectURL(file));
-  setAnalysisLoading(true);
-  setAnalysisError(null);
-  setAnalysisResult(null);
+    setFoodFile(file);
+    setFoodImage(URL.createObjectURL(file));
+    setAnalysisLoading(true);
+    setAnalysisError(null);
+    setAnalysisResult(null);
 
-  try {
-    const token = localStorage.getItem("token");
-    const formData = new FormData();
-    formData.append("image", file);
+    try {
+      const token = localStorage.getItem("token");
+      const formData = new FormData();
+      formData.append("image", file);
 
-    const res = await fetch("http://localhost:50001/api/analyzeFood", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-      body: formData,
-    });
+      const res = await fetch("http://localhost:50001/api/analyzeFood", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      });
 
-    if (!res.ok) {
-      const text = await res.text();
-      throw new Error(text || "Failed to analyze food");
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(text || "Failed to analyze food");
+      }
+
+      const data = await res.json();
+      setAnalysisResult(data);
+    } catch (err: any) {
+      setAnalysisError(err.message || "Analysis failed");
+    } finally {
+      setAnalysisLoading(false);
     }
-
-    const data = await res.json();
-    setAnalysisResult(data);
-  } catch (err: any) {
-    setAnalysisError(err.message || "Analysis failed");
-  } finally {
-    setAnalysisLoading(false);
-  }
-};
+  };
 
 
 
@@ -720,7 +719,7 @@ toast.success('Meal plan approved and saved successfully!');
       is_dairy_free: recipe.tags.includes('dairy-free'),
       is_keto: recipe.tags.includes('keto'),
       cuisine_type: 'international',
-      
+
       difficulty_level: recipe.difficulty,
       user_id: user.id,
       tags: recipe.tags
@@ -826,10 +825,6 @@ toast.success('Meal plan approved and saved successfully!');
     </div>
   );
 
-
-
-
-
   const downloadGroceryList = () => {
     if (!groceryList || groceryList.length === 0) {
       toast.error('No grocery list to download');
@@ -867,7 +862,6 @@ toast.success('Meal plan approved and saved successfully!');
     URL.revokeObjectURL(url);
   };
 
-
   const features = [
     {
       id: 'meal-planning',
@@ -875,79 +869,79 @@ toast.success('Meal plan approved and saved successfully!');
       title: 'AI Meal Planning',
       component: MealPlanningComponent,
     },
-  {
-  id: 'nutrition-analysis',
-  icon: Camera,
-  title: 'Nutrition Analysis',
-  component: () => (
-    <div className="p-6 bg-white rounded-lg shadow-md">
-      <h3 className="text-xl font-semibold mb-4">Food Analysis</h3>
+    {
+      id: 'nutrition-analysis',
+      icon: Camera,
+      title: 'Nutrition Analysis',
+      component: () => (
+        <div className="p-6 bg-white rounded-lg shadow-md">
+          <h3 className="text-xl font-semibold mb-4">Food Analysis</h3>
 
-      <div className="space-y-4">
-        {/* Image upload / preview */}
-        <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center relative">
-          {foodImage ? (
-            <img src={foodImage} alt="uploaded" className="mx-auto max-h-64 rounded-lg" />
-          ) : (
-            <>
-              <Camera className="mx-auto h-12 w-12 text-gray-400" />
-              <p className="mt-2 text-sm text-gray-600">
-                Upload a food image to analyze
-              </p>
-            </>
-          )}
+          <div className="space-y-4">
+            {/* Image upload / preview */}
+            <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center relative">
+              {foodImage ? (
+                <img src={foodImage} alt="uploaded" className="mx-auto max-h-64 rounded-lg" />
+              ) : (
+                <>
+                  <Camera className="mx-auto h-12 w-12 text-gray-400" />
+                  <p className="mt-2 text-sm text-gray-600">
+                    Upload a food image to analyze
+                  </p>
+                </>
+              )}
 
-          <div className="mt-2 flex justify-center gap-2">
-            <label className="px-4 py-2 bg-blue-600 text-white rounded-lg cursor-pointer hover:bg-blue-700">
-              {foodImage ? "Re-upload" : "Upload Image"}
-              <input
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={handleFoodUpload}
-              />
-            </label>
+              <div className="mt-2 flex justify-center gap-2">
+                <label className="px-4 py-2 bg-blue-600 text-white rounded-lg cursor-pointer hover:bg-blue-700">
+                  {foodImage ? "Re-upload" : "Upload Image"}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleFoodUpload}
+                  />
+                </label>
 
-            {foodImage && (
-              <button
-                onClick={() => {
-                  setFoodImage(null);
-                  setFoodFile(null);
-                  setAnalysisResult(null);
-                  setAnalysisError(null);
-                }}
-                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
-              >
-                Delete
-              </button>
+                {foodImage && (
+                  <button
+                    onClick={() => {
+                      setFoodImage(null);
+                      setFoodFile(null);
+                      setAnalysisResult(null);
+                      setAnalysisError(null);
+                    }}
+                    className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+                  >
+                    Delete
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Loading */}
+            {analysisLoading && <p className="text-gray-600 text-center">Analyzing...</p>}
+
+            {/* Error */}
+            {analysisError && (
+              <div className="p-3 bg-red-100 border border-red-400 text-red-700 rounded text-sm">
+                {analysisError}
+              </div>
+            )}
+
+            {/* Analysis result */}
+            {analysisResult && (
+              <div className="p-4 bg-emerald-50 rounded-lg text-sm text-gray-700 space-y-2">
+                <p>🍽 Calories: {analysisResult.calories}</p>
+                <p>🥦 Fiber: {analysisResult.fiber}</p>
+                <p>🥩 Fat: {analysisResult.fat}</p>
+                <p>🍚 Carbs: {analysisResult.carbs}</p>
+                <p>💪 Protein: {analysisResult.protein}</p>
+              </div>
             )}
           </div>
         </div>
-
-        {/* Loading */}
-        {analysisLoading && <p className="text-gray-600 text-center">Analyzing...</p>}
-
-        {/* Error */}
-        {analysisError && (
-          <div className="p-3 bg-red-100 border border-red-400 text-red-700 rounded text-sm">
-            {analysisError}
-          </div>
-        )}
-
-        {/* Analysis result */}
-        {analysisResult && (
-          <div className="p-4 bg-emerald-50 rounded-lg text-sm text-gray-700 space-y-2">
-            <p>🍽 Calories: {analysisResult.calories}</p>
-            <p>🥦 Fiber: {analysisResult.fiber}</p>
-            <p>🥩 Fat: {analysisResult.fat}</p>
-            <p>🍚 Carbs: {analysisResult.carbs}</p>
-            <p>💪 Protein: {analysisResult.protein}</p>
-          </div>
-        )}
-      </div>
-    </div>
-  )
-},
+      )
+    },
 
     {
       id: 'grocery-list',
