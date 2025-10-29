@@ -4,78 +4,60 @@ import UserService from "../../services/user.js";
 import httpResponse from "../../utils/httpResponse.js";
 import fetch from "node-fetch";
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import cloudinary from "../../utils/cloudinary.js";
 import fs from "fs";
 import path from "path";
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 const controller = {
-register: async (req, res) => {
-  try {
-    let imageUrl = null;
+  register: async (req, res) => {
+    try {
+      let imageUrl = null;
 
-if (req.file) {
-  // Upload to Cloudinary
-  imageUrl = await new Promise((resolve, reject) => {
-    const stream = cloudinary.uploader.upload_stream(
-      { folder: "nutritionists" },
-      (error, result) => {
-        if (error) return reject(error);
-        resolve(result.secure_url);
+      if (req.file && req.file.buffer) {
+        // ensure upload folder exists
+        const uploadDir = path.join(process.cwd(), "uploads/profileImages");
+        if (!fs.existsSync(uploadDir)) {
+          fs.mkdirSync(uploadDir, { recursive: true });
+        }
+
+        // generate unique filename
+        const ext = path.extname(req.file.originalname);
+        const uniqueName = `${Date.now()}-${Math.round(Math.random() * 1e9)}${ext}`;
+
+        // full path on disk
+        const filePath = path.join(uploadDir, uniqueName);
+
+        // write the buffer to disk
+        fs.writeFileSync(filePath, req.file.buffer);
+
+        // generate public URL
+        imageUrl = `/uploads/profileImages/${uniqueName}`;
       }
-    );
 
-    // Push file buffer to stream
-    const bufferStream = new (require("stream").Readable)();
-    bufferStream.push(req.file.buffer);
-    bufferStream.push(null);
-    bufferStream.pipe(stream);
-  });
+      const userData = {
+        ...req.body,
+        profileImage: imageUrl,
+      };
 
-  // Save locally
-  const uploadDir = path.join("uploads", "profileImages");
-  if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
+      // Handle certifications if provided as comma-separated string
+      if (userData.certifications && typeof userData.certifications === "string") {
+        userData.certifications = userData.certifications.split(",").map((s) => s.trim());
+      }
 
-  const fileName = `${Date.now()}-${req.file.originalname}`;
-  const filePath = path.join(uploadDir, fileName);
-  fs.writeFileSync(filePath, req.file.buffer);
-}
+      const addResponse = await UserService.add(userData);
 
-const ConsultationSchema = new mongoose.Schema({
-  user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
-  nutritionist: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
-  time: { type: Date, required: true },
-  reason: { type: String, required: true },
-  mode: { type: String, enum: ["online", "offline"], default: "online" },
-  status: { type: String, enum: ["pending", "approved", "denied"], default: "pending" },
-}, { timestamps: true });
-
-const Consultation = mongoose.model("Consultation", ConsultationSchema);
-
-    const userData = {
-      ...req.body,
-      profileImage: imageUrl,
-    };
-
-    // Handle certifications if provided as comma-separated string
-    if (userData.certifications && typeof userData.certifications === "string") {
-      userData.certifications = userData.certifications.split(",").map(s => s.trim());
+      if (addResponse.message === "success") {
+        return httpResponse.CREATED(res, addResponse.data);
+      } else if (addResponse.message === "failed") {
+        return httpResponse.CONFLICT(res, addResponse.data);
+      } else {
+        return httpResponse.INTERNAL_SERVER(res, addResponse.data);
+      }
+    } catch (err) {
+      console.error("Register error:", err);
+      return res.status(500).json({ message: "Registration failed" });
     }
-
-    const addResponse = await UserService.add(userData);
-
-    if (addResponse.message === "success") {
-      return httpResponse.CREATED(res, addResponse.data);
-    } else if (addResponse.message === "failed") {
-      return httpResponse.CONFLICT(res, addResponse.data);
-    } else {
-      return httpResponse.INTERNAL_SERVER(res, addResponse.data);
-    }
-  } catch (err) {
-    console.error("Register error:", err);
-    return res.status(500).json({ message: "Registration failed" });
-  }
-},
+  },
 
   login: async (req, res) => {
     const data = await UserService.login(req.body);
@@ -167,50 +149,50 @@ const Consultation = mongoose.model("Consultation", ConsultationSchema);
   },
 
   // Send a consultation request
-sendConsultationRequest: async (req, res) => {
-  try {
-    const { nutritionistId, time, reason, mode } = req.body;
-    const request = await Consultation.create({
-      user: req.user._id,
-      nutritionist: nutritionistId,
-      time,
-      reason,
-      mode,
-    });
-    return res.status(201).json({ message: "Request sent", data: request });
-  } catch (error) {
-    console.error(error);
-    return res.status(500).json({ message: "Failed to send request", error: error.message });
-  }
-},
+  sendConsultationRequest: async (req, res) => {
+    try {
+      const { nutritionistId, time, reason, mode } = req.body;
+      const request = await Consultation.create({
+        user: req.user._id,
+        nutritionist: nutritionistId,
+        time,
+        reason,
+        mode,
+      });
+      return res.status(201).json({ message: "Request sent", data: request });
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({ message: "Failed to send request", error: error.message });
+    }
+  },
 
-// Get pending requests for a nutritionist
-getPendingConsultations: async (req, res) => {
-  try {
-    const requests = await Consultation.find({ nutritionist: req.user._id, status: "pending" })
-      .populate("user", "-password");
-    return res.status(200).json({ data: requests });
-  } catch (error) {
-    console.error(error);
-    return res.status(500).json({ message: "Failed to fetch requests", error: error.message });
-  }
-},
+  // Get pending requests for a nutritionist
+  getPendingConsultations: async (req, res) => {
+    try {
+      const requests = await Consultation.find({ nutritionist: req.user._id, status: "pending" })
+        .populate("user", "-password");
+      return res.status(200).json({ data: requests });
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({ message: "Failed to fetch requests", error: error.message });
+    }
+  },
 
-// Update consultation status
-updateConsultationStatus: async (req, res) => {
-  try {
-    const { requestId, status } = req.body;
-    const updated = await Consultation.findByIdAndUpdate(
-      requestId,
-      { status },
-      { new: true }
-    );
-    return res.status(200).json({ message: "Request updated", data: updated });
-  } catch (error) {
-    console.error(error);
-    return res.status(500).json({ message: "Failed to update request", error: error.message });
-  }
-},
+  // Update consultation status
+  updateConsultationStatus: async (req, res) => {
+    try {
+      const { requestId, status } = req.body;
+      const updated = await Consultation.findByIdAndUpdate(
+        requestId,
+        { status },
+        { new: true }
+      );
+      return res.status(200).json({ message: "Request updated", data: updated });
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({ message: "Failed to update request", error: error.message });
+    }
+  },
 
 
   analyzeFoodImage: async (req, res) => {

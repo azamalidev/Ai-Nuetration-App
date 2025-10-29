@@ -51,61 +51,59 @@ function PrivateRoute({ children }: { children: React.ReactNode }) {
 // ✅ Main App
 function App() {
   return (
-    <Router>
-      <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-50">
-        <Routes>
-          {/* ---------- PUBLIC ROUTES ---------- */}
-          <Route path="/" element={<LandingPage />} />
-          <Route path="/login" element={<Auth />} />
-          <Route path="/register" element={<Auth />} />
+    <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-50">
+      <Routes>
+        {/* PUBLIC ROUTES */}
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/login" element={<Auth />} />
+        <Route path="/register" element={<Auth />} />
 
-          {/* ---------- PROTECTED ROUTES ---------- */}
-          <Route
-            path="/profile"
-            element={
-              <PrivateRoute>
-                <HealthProfile />
-              </PrivateRoute>
-            }
-          />
+        {/* PROTECTED ROUTES */}
+        <Route
+          path="/profile"
+          element={
+            <PrivateRoute>
+              <HealthProfile />
+            </PrivateRoute>
+          }
+        />
 
-          <Route
-            path="/admin"
-            element={
-              <PrivateRoute>
-                <Admin />
-              </PrivateRoute>
-            }
-          />
+        <Route
+          path="/admin"
+          element={
+            <PrivateRoute>
+              <Admin />
+            </PrivateRoute>
+          }
+        />
 
-          <Route
-            path="/admindashboard"
-            element={
-              <PrivateRoute>
-                <Dash />
-              </PrivateRoute>
-            }
-          />
+        <Route
+          path="/admindashboard"
+          element={
+            <PrivateRoute>
+              <Dash />
+            </PrivateRoute>
+          }
+        />
 
-          {/* ---------- STREAM.IO WRAPPED ROUTE ---------- */}
-          <Route
-            path="/dashboard"
-            element={
-              <PrivateRoute>
-                {/* Wrap ONLY Dashboard with Stream Provider */}
-                <StreamVideoProvider>
-                  <Dashboard />
-                </StreamVideoProvider>
-              </PrivateRoute>
-            }
-          />
+        {/* STREAM.IO WRAPPED ROUTE */}
+        <Route
+          path="/dashboard"
+          element={
+            <PrivateRoute>
+              <StreamVideoProvider>
+                <Dashboard />
+              </StreamVideoProvider>
+            </PrivateRoute>
+          }
+        />
 
-          {/* ---------- FALLBACK ---------- */}
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </div>
-    </Router>
+        {/* FALLBACK */}
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </div>
   );
 }
+
 
 export default App;

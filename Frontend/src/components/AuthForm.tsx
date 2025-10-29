@@ -71,7 +71,7 @@ export function AuthForm({ type }: AuthFormProps) {
 
 
         // 🔥 make sure apiService.register uses axios without manual content-type
-        const response = await apiService.register(formData);
+       const response = await apiService.register(formData, true);
         console.log("Register response:", response);
 
         setSuccessMessage('Registration successful! You can now sign in.');

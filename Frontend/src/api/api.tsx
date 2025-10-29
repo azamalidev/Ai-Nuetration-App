@@ -200,25 +200,28 @@ class ApiService {
     }
 
 
- async register(userData: any, isMultipart = false): Promise<ApiResponse> {
-    const headers = isMultipart ? getAuthHeaders() : getAuthHeaders();
-    
-    // Don't set Content-Type for FormData; browser sets it automatically
-    if (!isMultipart) {
-        headers['Content-Type'] = 'application/json';
-        userData = JSON.stringify(userData);
+    async register(userData: any, isMultipart = false): Promise<ApiResponse> {
+        const headers: any = {};
+
+        // ✅ Only set JSON content type when NOT using FormData
+        if (!isMultipart) {
+            headers['Content-Type'] = 'application/json';
+            userData = JSON.stringify(userData);
+        }
+
+        // ✅ Never set headers manually for FormData
+        const response = await fetch(`${this.baseUrl}/register`, {
+            method: 'POST',
+            headers,
+            body: userData,
+        });
+
+        return handleResponse(response);
     }
 
-    const response = await fetch(`${this.baseUrl}/register`, {
-        method: 'POST',
-        headers,
-        body: userData,
-    });
 
-    return handleResponse(response);
-}
 
-  
+
 
 
     async login(credentials: LoginData): Promise<ApiResponse> {
@@ -237,7 +240,7 @@ class ApiService {
 
 
 
-   
+
 
     // Get user profile
     async getUserProfile(): Promise<ApiResponse> {
