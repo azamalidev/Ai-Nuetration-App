@@ -4,7 +4,7 @@ import { } from "dotenv/config";
 import loaders from "./loaders/index.js";
 import config from "./config/index.js";
 import userRoute from "./routes/user/index.js";
-
+import path from "path";
 async function startServer() {
   const app = express();
 
@@ -21,9 +21,14 @@ async function startServer() {
   await loaders.init({ expressApp: app });
 
   // ---- MOUNT ROUTES ----
+<<<<<<< HEAD
   // Make sure multer is applied **inside your route** that handles file uploads
   app.use("/api", userRoute); // e.g., /api/register
 
+=======
+  app.use("/api", userRoute);  // now /api/login, /api/register, /api/mealGen
+  app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
+>>>>>>> 4467d8ad442453c4b807ab7f0fabb9654a8ff965
   const server = app.listen(config.env.port, () =>
     console.log(`Server Started ~ :${config.env.port}`)
   );

@@ -17,7 +17,7 @@ export function AuthForm({ type }: AuthFormProps) {
   const [bio, setBio] = useState('');
   const [certifications, setCertifications] = useState('');
 
-const [profileImage, setProfileImage] = useState<File | null>(null);
+  const [profileImage, setProfileImage] = useState<File | null>(null);
 
   const [yearsOfExperience, setYearsOfExperience] = useState('');
   const [specialization, setSpecialization] = useState('');
@@ -35,140 +35,80 @@ const [profileImage, setProfileImage] = useState<File | null>(null);
     try {
       if (type === 'register') {
         const { apiService } = await import('../api/api');
-        try {
-          const registerData: any = { 
-            email, 
-            password,
-            role,
-            name: name || undefined
-          };
 
-          // Add nutritionist-specific fields if role is NUTRITIONIST
-       if (role === 'NUTRITIONIST') {
-  if (bio) registerData.bio = bio;
-  if (certifications) registerData.certifications = certifications.split(',').map(cert => cert.trim());
-  if (yearsOfExperience) registerData.yearsOfExperience = parseInt(yearsOfExperience);
-  if (specialization) registerData.specialization = specialization;
-  if (qualifications) registerData.qualifications = qualifications;
+        // collect base user data
+        const registerData: any = {
+          email,
+          password,
+          role,
+          name: name || undefined,
+        };
 
-  // 🖼️ Handle profile image upload (only for Nutritionist)
-  if (profileImage) {
-    const formData = new FormData();
-
-    // Append all nutritionist fields to FormData
-    Object.entries(registerData).forEach(([key, value]) => {
-      if (Array.isArray(value)) {
-        value.forEach((v) => formData.append(key, v));
-      } else if (value !== undefined && value !== null) {
-        formData.append(key, value as string);
-      }
-    });
-
-    // Append the uploaded image file
-    formData.append('profileImage', profileImage);
-
-    // Make the multipart/form-data request
-    const response = await apiService.register(formData, true);
-    console.log("Register response:", response);
-
-    setSuccessMessage('Registration successful! You can now sign in.');
-    setEmail('');
-    setPassword('');
-    setRole('USER');
-    setName('');
-    setBio('');
-    setCertifications('');
-    setYearsOfExperience('');
-    setSpecialization('');
-    setQualifications('');
-    setProfileImage(null);
-    setTimeout(() => navigate('/login'), 1500);
-    return; // stop further code execution
-  }
-}
-
-const formData = new FormData();
-Object.entries(registerData).forEach(([key, value]) => {
-  if (Array.isArray(value)) {
-    value.forEach((v) => formData.append(key, v));
-  } else if (value !== undefined && value !== null) {
-    formData.append(key, value as string);
-  }
-});
-
-if (profileImage) {
-  formData.append("profileImage", profileImage);
-}
-
-const response = await apiService.register(formData, true); // pass multipart flag
-          console.log("Register response:", response);
-
-          setSuccessMessage('Registration successful! You can now sign in.');
-          setEmail('');
-          setPassword('');
-          setRole('USER');
-          setName('');
-          setBio('');
-          setCertifications('');
-          setYearsOfExperience('');
-          setSpecialization('');
-          setQualifications('');
-          setTimeout(() => {
-            navigate('/login');
-          }, 1500);
-        } catch (error: any) {
-          const message = error instanceof Error ? error.message : 'Registration failed. Please try again.';
-          setError(message);
-          console.error('Register error:', message);
+        // nutritionist-specific
+        if (role === 'NUTRITIONIST') {
+          if (bio) registerData.bio = bio;
+          if (certifications) registerData.certifications = certifications.split(',').map(cert => cert.trim());
+          if (yearsOfExperience) registerData.yearsOfExperience = parseInt(yearsOfExperience);
+          if (specialization) registerData.specialization = specialization;
+          if (qualifications) registerData.qualifications = qualifications;
         }
 
-      } else {
-        // Handle Login - using the login function from useAuth
-        try {
-          const { success, error } = await login({ email, password });
-          console.log("Login success:", success);
-
-          if (success) {
-            setSuccessMessage('Login successful! Redirecting...');
-            setEmail('');
-            setPassword('');
-            setTimeout(() => {
-              navigate('/dashboard');
-            }, 500);
-          } else {
-            setError(error || 'Login failed. Please try again.');
+        // ✅ always build FormData once
+        const formData:any = new FormData();
+        Object.entries(registerData).forEach(([key, value]) => {
+          if (Array.isArray(value)) {
+            value.forEach(v => formData.append(key, v));
+          } else if (value !== undefined && value !== null) {
+            formData.append(key, value.toString());
           }
-        } catch (error: any) {
-          console.error(`${type} Error:`, error);
-          setError(error.message || 'Something went wrong. Please try again.');
+        });
+
+        if (profileImage) {
+          formData.append("profileImage", profileImage); // 👈 must match backend
         }
 
+                console.log("Register data before FormData:", registerData, formData,"Profile Image:", profileImage);
+
+
+        // 🔥 make sure apiService.register uses axios without manual content-type
+        const response = await apiService.register(formData);
+        console.log("Register response:", response);
+
+        setSuccessMessage('Registration successful! You can now sign in.');
+        setEmail('');
+        setPassword('');
+        setRole('USER');
+        setName('');
+        setBio('');
+        setCertifications('');
+        setYearsOfExperience('');
+        setSpecialization('');
+        setQualifications('');
+        setProfileImage(null);
+
+        setTimeout(() => navigate('/login'), 1500);
+        return;
       }
-    } catch (error: any) {
-      console.log(`${type} Error:`, error);
 
-      if (type === 'register') {
-
-        setError(
-          error?.response?.data?.message || 'Registration failed. Please try again.'
-        );
-
+      // ---- login ----
+      const { success, error } = await login({ email, password });
+      if (success) {
+        setSuccessMessage('Login successful! Redirecting...');
+        setEmail('');
+        setPassword('');
+        setTimeout(() => navigate('/dashboard'), 500);
       } else {
-        // Login error handling
-        if (error?.response?.status === 401) {
-          setError('Invalid email or password. Please try again.');
-        } else if (error?.response?.status === 404) {
-          setError('Account not found. Please check your email or sign up.');
-        } else {
-          setError(
-            error?.response?.data?.message || 'Login failed. Please try again.'
-          );
-        }
+        setError(error || 'Login failed. Please try again.');
       }
+
+    } catch (error: any) {
+      console.error(`${type} Error:`, error);
+      setError(error?.response?.data?.message || 'Something went wrong. Please try again.');
     } finally {
       setLoading(false);
     }
   };
+
 
   return (
     <div className="max-w-md w-full space-y-8">
@@ -235,7 +175,7 @@ const response = await apiService.register(formData, true); // pass multipart fl
               {role === 'NUTRITIONIST' && (
                 <div className="space-y-4 border border-emerald-200 rounded-lg p-4 bg-emerald-50">
                   <h3 className="text-lg font-semibold text-emerald-800 mb-3">Professional Information</h3>
-                  
+
                   <div>
                     <label htmlFor="bio" className="block text-sm font-medium text-gray-700 mb-1">
                       Bio
@@ -316,21 +256,21 @@ const response = await apiService.register(formData, true); // pass multipart fl
               )}
             </>
           )}
-{type === 'register' && role === 'NUTRITIONIST' && (
-  <div>
-    <label htmlFor="profileImage" className="block text-sm font-medium text-gray-700 mb-1">
-      Upload Profile Image
-    </label>
-    <input
-      id="profileImage"
-      name="profileImage"
-      type="file"
-      accept="image/*"
-      className="appearance-none relative block w-full px-3 py-2 border border-gray-300 text-gray-900 rounded-md focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 focus:z-10 sm:text-sm"
-      onChange={(e) => setProfileImage(e.target.files?.[0] || null)}
-    />
-  </div>
-)}
+          {type === 'register' && role === 'NUTRITIONIST' && (
+            <div>
+              <label htmlFor="profileImage" className="block text-sm font-medium text-gray-700 mb-1">
+                Upload Profile Image
+              </label>
+              <input
+                id="profileImage"
+                name="profileImage"
+                type="file"
+                accept="image/*"
+                className="appearance-none relative block w-full px-3 py-2 border border-gray-300 text-gray-900 rounded-md focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 focus:z-10 sm:text-sm"
+                onChange={(e) => setProfileImage(e.target.files?.[0] || null)}
+              />
+            </div>
+          )}
 
 
           <div>

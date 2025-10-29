@@ -5,7 +5,8 @@ import httpResponse from "../../utils/httpResponse.js";
 import fetch from "node-fetch";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import cloudinary from "../../utils/cloudinary.js";
-
+import fs from "fs";
+import path from "path";
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 const controller = {
@@ -13,12 +14,27 @@ register: async (req, res) => {
   try {
     let imageUrl = null;
 
+<<<<<<< HEAD
   if (req.file) {
   const stream = cloudinary.uploader.upload_stream(
     { folder: "nutritionists" },
     (error, result) => {
       if (error) return reject(error);
       resolve(result.secure_url); // This URL can be saved in DB
+=======
+    if (req.file) {
+      const uploadDir = path.join("uploads", "profileImages");
+      if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
+
+      const fileName = `${Date.now()}-${req.file.originalname}`;
+      const filePath = path.join(uploadDir, fileName);
+
+      // Save the buffer to disk
+      fs.writeFileSync(filePath, req.file.buffer);
+
+      // URL to serve image
+      imageUrl = `/uploads/profileImages/${fileName}`;
+>>>>>>> 4467d8ad442453c4b807ab7f0fabb9654a8ff965
     }
   );
 
@@ -29,13 +45,12 @@ register: async (req, res) => {
 }
 
 
-    // Merge image URL into body
     const userData = {
       ...req.body,
-      profileImage: imageUrl || null,
+      profileImage: imageUrl,
     };
 
-    // Convert certifications string to array if needed
+    // Handle certifications if provided as comma-separated string
     if (userData.certifications && typeof userData.certifications === "string") {
       userData.certifications = userData.certifications.split(",").map(s => s.trim());
     }
