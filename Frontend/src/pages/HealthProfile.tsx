@@ -1,4 +1,7 @@
 
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+
 
 import React, { useEffect, useState } from 'react';
 import { Edit2, User, Target, Activity, Utensils, BookOpen, X, ArrowLeft, Flame, Heart, TrendingUp, Calendar } from 'lucide-react';
@@ -70,8 +73,7 @@ function HealthProfile() {
         }
       }
     } catch (error) {
-      console.error('Failed to fetch user profile:', error);
-    } finally {
+  toast.error('Failed to load profile. Please try again.')    } finally {
       setLoading(false);
     }
   };
@@ -88,12 +90,12 @@ function HealthProfile() {
       if (result) {
         fetchProfile();
         handleBackToProfile();
-        console.log("Dish deleted successfully:", result.data);
+      toast.success('Dish deleted successfully!');
       } else {
-        console.error("Failed to delete dish:", (result as any).message);
+      toast.error('Failed to delete dish.');
       }
     } catch (error) {
-      console.error("Error deleting dish:", error);
+    toast.error('An error occurred while deleting dish.');
     }
   }
   async function handleDeleteMeal(mealId: any) {
@@ -104,12 +106,12 @@ function HealthProfile() {
       if (result) {
         fetchProfile();
         handleBackToProfile();
-        console.log("meal deleted successfully:", result.data);
+      toast.success('Meal deleted successfully!');
       } else {
-        console.error("Failed to delete meal:", (result as any).message);
+      toast.error('Failed to delete meal.');
       }
     } catch (error) {
-      console.error("Error deleting meal:", error);
+    toast.error('An error occurred while deleting meal.');
     }
   }
 
@@ -121,8 +123,8 @@ function HealthProfile() {
       setProfileData(formData);
       setShowModal(false);
     } catch (error) {
-      console.error('Failed to update profile:', error);
-      alert('Something went wrong. Please try again.');
+    toast.success('Profile updated successfully!');
+    toast.error('Something went wrong. Please try again.');
     } finally {
       setUpdating(false);
     }

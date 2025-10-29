@@ -1,4 +1,7 @@
 import React, { useEffect, useState } from 'react';
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+
 // import { supabase } from '../lib/supabase';
 // import { useAuth } from '../hooks/useAuth';
 import { Navigate } from 'react-router-dom';

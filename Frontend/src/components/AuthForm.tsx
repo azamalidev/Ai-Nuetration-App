@@ -1,27 +1,25 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAuthContext } from '../authContext';
-
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuthContext } from "../authContext";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 interface AuthFormProps {
-  type: 'login' | 'register';
+  type: "login" | "register";
 }
 
 export function AuthForm({ type }: AuthFormProps) {
   const navigate = useNavigate();
   const { login } = useAuthContext();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [role, setRole] = useState('USER');
-  const [name, setName] = useState('');
-  const [bio, setBio] = useState('');
-  const [certifications, setCertifications] = useState('');
-
-  const [profileImage, setProfileImage] = useState<File | null>(null);
-
-  const [yearsOfExperience, setYearsOfExperience] = useState('');
-  const [specialization, setSpecialization] = useState('');
-  const [qualifications, setQualifications] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [role, setRole] = useState("USER");
+  const [name, setName] = useState("");
+  const [bio, setBio] = useState("");
+  const [certifications, setCertifications] = useState("");
+  const [yearsOfExperience, setYearsOfExperience] = useState("");
+  const [specialization, setSpecialization] = useState("");
+  const [qualifications, setQualifications] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -33,8 +31,8 @@ export function AuthForm({ type }: AuthFormProps) {
     setLoading(true);
 
     try {
-      if (type === 'register') {
-        const { apiService } = await import('../api/api');
+      if (type === "register") {
+        const { apiService } = await import("../api/api");
 
         // collect base user data
         const registerData: any = {
@@ -45,81 +43,109 @@ export function AuthForm({ type }: AuthFormProps) {
         };
 
         // nutritionist-specific
-        if (role === 'NUTRITIONIST') {
+        if (role === "NUTRITIONIST") {
           if (bio) registerData.bio = bio;
-          if (certifications) registerData.certifications = certifications.split(',').map(cert => cert.trim());
-          if (yearsOfExperience) registerData.yearsOfExperience = parseInt(yearsOfExperience);
+          if (certifications)
+            registerData.certifications = certifications
+              .split(",")
+              .map((cert) => cert.trim());
+          if (yearsOfExperience)
+            registerData.yearsOfExperience = parseInt(yearsOfExperience);
           if (specialization) registerData.specialization = specialization;
           if (qualifications) registerData.qualifications = qualifications;
         }
 
         // ✅ always build FormData once
-        const formData:any = new FormData();
+        const formData: any = new FormData();
         Object.entries(registerData).forEach(([key, value]) => {
           if (Array.isArray(value)) {
-            value.forEach(v => formData.append(key, v));
+            value.forEach((v) => formData.append(key, v));
           } else if (value !== undefined && value !== null) {
             formData.append(key, value.toString());
           }
         });
 
         if (profileImage) {
-          formData.append("profileImage", profileImage); // 👈 must match backend
+          formData.append("profileImage", profileImage); // 👈 must match backend field
         }
 
-                console.log("Register data before FormData:", registerData, formData,"Profile Image:", profileImage);
-
+        console.log(
+          "Register data before FormData:",
+          registerData,
+          formData,
+          "Profile Image:",
+          profileImage
+        );
 
         // 🔥 make sure apiService.register uses axios without manual content-type
-       const response = await apiService.register(formData, true);
+        const response = await apiService.register(formData, true);
         console.log("Register response:", response);
 
-        setSuccessMessage('Registration successful! You can now sign in.');
-        setEmail('');
-        setPassword('');
-        setRole('USER');
-        setName('');
-        setBio('');
-        setCertifications('');
-        setYearsOfExperience('');
-        setSpecialization('');
-        setQualifications('');
-        setProfileImage(null);
+        toast.success("Registration successful!");
+        setEmail("");
+        setPassword("");
+        setRole("USER");
+        setName("");
+        setBio("");
+        setCertifications("");
+        setYearsOfExperience("");
+        setSpecialization("");
+        setQualifications("");
 
-        setTimeout(() => navigate('/login'), 1500);
-        return;
-      }
-
-      // ---- login ----
-      const { success, error } = await login({ email, password });
-      if (success) {
-        setSuccessMessage('Login successful! Redirecting...');
-        setEmail('');
-        setPassword('');
-        setTimeout(() => navigate('/dashboard'), 500);
+        setTimeout(() => {
+          navigate("/login");
+        }, 1500);
       } else {
-        setError(error || 'Login failed. Please try again.');
-      }
+        // 🟠 Handle Login
+        const { success, error } = await login({ email, password });
+        console.log("Login success:", success);
 
+        if (success) {
+          toast.success("Login successful!");
+          setEmail("");
+          setPassword("");
+          setTimeout(() => {
+            navigate("/dashboard");
+          }, 500);
+        } else {
+          toast.error(error || "Login failed. Please try again.");
+        }
+      }
     } catch (error: any) {
-      console.error(`${type} Error:`, error);
-      setError(error?.response?.data?.message || 'Something went wrong. Please try again.');
+      console.log(`${type} Error:`, error);
+
+      if (type === "register") {
+        toast.error(
+          error?.response?.data?.message ||
+            "Registration failed. Please try again."
+        );
+      } else {
+        // Login error handling
+        if (error?.response?.status === 401) {
+          toast.error("Invalid email or password. Please try again.");
+        } else if (error?.response?.status === 404) {
+          toast.error("Account not found. Please check your email or sign up.");
+        } else {
+          toast.error(
+            error?.response?.data?.message || "Login failed. Please try again."
+          );
+        }
+      }
     } finally {
       setLoading(false);
     }
   };
 
-
   return (
     <div className="max-w-md w-full space-y-8">
       <div>
         <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-          {type === 'login' ? 'Sign in to your account' : 'Create your account'}
+          {type === "login" ? "Sign in to your account" : "Create your account"}
         </h2>
         <p className="mt-2 text-center text-sm text-gray-600">
-          {type === 'login'
-            ? 'Sign in to access your personalized nutrition plan'
-            : 'Start your journey to better health'}
+          {type === "login"
+            ? "Sign in to access your personalized nutrition plan"
+            : "Start your journey to better health"}
         </p>
       </div>
 
@@ -136,10 +162,13 @@ export function AuthForm({ type }: AuthFormProps) {
         )}
 
         <div className="space-y-4">
-          {type === 'register' && (
+          {type === "register" && (
             <>
               <div>
-                <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+                <label
+                  htmlFor="name"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
                   Full Name
                 </label>
                 <input
@@ -155,7 +184,10 @@ export function AuthForm({ type }: AuthFormProps) {
               </div>
 
               <div>
-                <label htmlFor="role" className="block text-sm font-medium text-gray-700 mb-1">
+                <label
+                  htmlFor="role"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
                   Role
                 </label>
                 <select
@@ -172,12 +204,17 @@ export function AuthForm({ type }: AuthFormProps) {
               </div>
 
               {/* Nutritionist-specific fields */}
-              {role === 'NUTRITIONIST' && (
+              {role === "NUTRITIONIST" && (
                 <div className="space-y-4 border border-emerald-200 rounded-lg p-4 bg-emerald-50">
-                  <h3 className="text-lg font-semibold text-emerald-800 mb-3">Professional Information</h3>
+                  <h3 className="text-lg font-semibold text-emerald-800 mb-3">
+                    Professional Information
+                  </h3>
 
                   <div>
-                    <label htmlFor="bio" className="block text-sm font-medium text-gray-700 mb-1">
+                    <label
+                      htmlFor="bio"
+                      className="block text-sm font-medium text-gray-700 mb-1"
+                    >
                       Bio
                     </label>
                     <textarea
@@ -192,7 +229,10 @@ export function AuthForm({ type }: AuthFormProps) {
                   </div>
 
                   <div>
-                    <label htmlFor="qualifications" className="block text-sm font-medium text-gray-700 mb-1">
+                    <label
+                      htmlFor="qualifications"
+                      className="block text-sm font-medium text-gray-700 mb-1"
+                    >
                       Qualifications
                     </label>
                     <input
@@ -207,7 +247,10 @@ export function AuthForm({ type }: AuthFormProps) {
                   </div>
 
                   <div>
-                    <label htmlFor="specialization" className="block text-sm font-medium text-gray-700 mb-1">
+                    <label
+                      htmlFor="specialization"
+                      className="block text-sm font-medium text-gray-700 mb-1"
+                    >
                       Specialization
                     </label>
                     <input
@@ -222,7 +265,10 @@ export function AuthForm({ type }: AuthFormProps) {
                   </div>
 
                   <div>
-                    <label htmlFor="yearsOfExperience" className="block text-sm font-medium text-gray-700 mb-1">
+                    <label
+                      htmlFor="yearsOfExperience"
+                      className="block text-sm font-medium text-gray-700 mb-1"
+                    >
                       Years of Experience
                     </label>
                     <input
@@ -239,7 +285,10 @@ export function AuthForm({ type }: AuthFormProps) {
                   </div>
 
                   <div>
-                    <label htmlFor="certifications" className="block text-sm font-medium text-gray-700 mb-1">
+                    <label
+                      htmlFor="certifications"
+                      className="block text-sm font-medium text-gray-700 mb-1"
+                    >
                       Certifications
                     </label>
                     <input
@@ -256,9 +305,12 @@ export function AuthForm({ type }: AuthFormProps) {
               )}
             </>
           )}
-          {type === 'register' && role === 'NUTRITIONIST' && (
+          {type === "register" && role === "NUTRITIONIST" && (
             <div>
-              <label htmlFor="profileImage" className="block text-sm font-medium text-gray-700 mb-1">
+              <label
+                htmlFor="profileImage"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
                 Upload Profile Image
               </label>
               <input
@@ -272,9 +324,11 @@ export function AuthForm({ type }: AuthFormProps) {
             </div>
           )}
 
-
           <div>
-            <label htmlFor="email-address" className="block text-sm font-medium text-gray-700 mb-1">
+            <label
+              htmlFor="email-address"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
               Email address
             </label>
             <input
@@ -291,14 +345,19 @@ export function AuthForm({ type }: AuthFormProps) {
           </div>
 
           <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+            <label
+              htmlFor="password"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
               Password
             </label>
             <input
               id="password"
               name="password"
               type="password"
-              autoComplete={type === 'login' ? 'current-password' : 'new-password'}
+              autoComplete={
+                type === "login" ? "current-password" : "new-password"
+              }
               required
               className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 focus:z-10 sm:text-sm"
               placeholder="Password"
@@ -314,24 +373,33 @@ export function AuthForm({ type }: AuthFormProps) {
             disabled={loading}
             className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {loading ? 'Processing...' : type === 'login' ? 'Sign in' : 'Sign up'}
+            {loading
+              ? "Processing..."
+              : type === "login"
+              ? "Sign in"
+              : "Sign up"}
           </button>
         </div>
 
         {/* Toggle between login and register */}
         <div className="text-center">
           <p className="text-sm text-gray-600">
-            {type === 'login' ? "Don't have an account? " : "Already have an account? "}
+            {type === "login"
+              ? "Don't have an account? "
+              : "Already have an account? "}
             <button
               type="button"
-              onClick={() => navigate(type === 'login' ? '/register' : '/login')}
+              onClick={() =>
+                navigate(type === "login" ? "/register" : "/login")
+              }
               className="font-medium text-emerald-600 hover:text-emerald-500"
             >
-              {type === 'login' ? 'Sign up' : 'Sign in'}
+              {type === "login" ? "Sign up" : "Sign in"}
             </button>
           </p>
         </div>
       </form>
+      <ToastContainer position="top-right" autoClose={3000} theme="colored" />
     </div>
   );
 }

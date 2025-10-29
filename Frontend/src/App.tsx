@@ -1,7 +1,14 @@
 import React from "react";
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+} from "react-router-dom";
 import { useAuthContext } from "./authContext";
 import axios from "axios";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 import LandingPage from "./pages/LandingPage";
 import HealthProfile from "./pages/HealthProfile";
@@ -98,12 +105,12 @@ function App() {
           }
         />
 
-        {/* FALLBACK */}
+        {/* ---------- FALLBACK ---------- */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+      <ToastContainer position="top-right" autoClose={3000} theme="colored" />
     </div>
   );
 }
-
 
 export default App;

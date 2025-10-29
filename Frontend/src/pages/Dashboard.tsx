@@ -1,3 +1,5 @@
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 import { useAuthContext } from '../authContext';
 import React, { useState, useEffect } from 'react';
@@ -154,7 +156,7 @@ const handleFoodUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
       const response = await apiService.generateMealPlan(userProfile);
       setMealPlan(response.data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to generate meal plan');
+toast.error(err instanceof Error ? err.message : 'Failed to generate meal plan');
     } finally {
       setLoading(false);
     }
@@ -188,7 +190,7 @@ const handleFoodUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
 
   const approveMealPlan = async () => {
     if (!mealPlan || !user) {
-      setError('No meal plan to approve or user not logged in');
+      toast.error('No meal plan to approve or user not logged in');
       return;
     }
     console.log("ansnuas", user)
@@ -228,10 +230,10 @@ const handleFoodUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
       await apiService.createMealPlan(mealPlanData);
 
       setMealPlanApproved(true); // Set approval state to true
-      setSuccessMessage('Meal plan approved and saved successfully! ');
+toast.success('Meal plan approved and saved successfully!');
 
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to approve meal plan');
+      toast.error(err instanceof Error ? err.message : 'Failed to approve meal plan');
     } finally {
       setApprovingPlan(false);
     }
@@ -277,7 +279,7 @@ const handleFoodUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
       const response = await apiService.getRecipeRecommendations(requestData);
       setRecipes(response.data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to get recipe recommendations');
+      toast.error(err instanceof Error ? err.message : 'Failed to get recipe recommendations');
     } finally {
       setLoading(false);
     }
@@ -300,7 +302,7 @@ const handleFoodUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
       const response = await apiService.generateGroceryList(requestData);
       setGroceryList(response.data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to generate grocery list');
+      toast.error(err instanceof Error ? err.message : 'Failed to generate grocery list');
     } finally {
       setLoading(false);
     }
@@ -830,7 +832,7 @@ const handleFoodUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
 
   const downloadGroceryList = () => {
     if (!groceryList || groceryList.length === 0) {
-      setError('No grocery list to download');
+      toast.error('No grocery list to download');
       return;
     }
 
