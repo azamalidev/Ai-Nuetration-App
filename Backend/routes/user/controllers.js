@@ -13,28 +13,21 @@ register: async (req, res) => {
   try {
     let imageUrl = null;
 
-    if (req.file) {
-      try {
-        // Upload image to Cloudinary
-        imageUrl = await new Promise((resolve, reject) => {
-          const stream = cloudinary.uploader.upload_stream(
-            { folder: "nutritionists" },
-            (error, result) => {
-              if (error) return reject(error);
-              resolve(result.secure_url);
-            }
-          );
-
-          const bufferStream = new (require("stream").Readable)();
-          bufferStream.push(req.file.buffer);
-          bufferStream.push(null);
-          bufferStream.pipe(stream);
-        });
-      } catch (error) {
-        console.error("Cloudinary upload failed:", error);
-        return res.status(500).json({ message: "Image upload failed" });
-      }
+  if (req.file) {
+  const stream = cloudinary.uploader.upload_stream(
+    { folder: "nutritionists" },
+    (error, result) => {
+      if (error) return reject(error);
+      resolve(result.secure_url); // This URL can be saved in DB
     }
+  );
+
+  const bufferStream = new (require("stream").Readable)();
+  bufferStream.push(req.file.buffer);
+  bufferStream.push(null);
+  bufferStream.pipe(stream);
+}
+
 
     // Merge image URL into body
     const userData = {

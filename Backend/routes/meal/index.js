@@ -6,8 +6,7 @@ import authenticate from "../../middlewares/authenticate.js";
 
 const router = express.Router();
 
-// All meal routes require authentication since they're user-specific
-// router.use(authenticate);
+
 
 // Meal CRUD operations
 router.post("/", controllers.create);

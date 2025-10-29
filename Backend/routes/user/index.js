@@ -9,25 +9,10 @@ import upload from "../../middlewares/upload.js";
 
 const router = express.Router();
 
-router.post("/login", validate(authValidation.login), controllers.login);
 
-// ✅ FIXED REGISTER ROUTE
-router.post(
-  "/register",
-  upload.single("profileImage"),  // Handle file upload
-  (req, res, next) => {
-    // Convert string values to proper types for validation
-    if (req.body.certifications && typeof req.body.certifications === 'string') {
-      req.body.certifications = req.body.certifications.split(',').map(s => s.trim());
-    }
-    if (req.body.yearsOfExperience) {
-      req.body.yearsOfExperience = parseInt(req.body.yearsOfExperience);
-    }
-    next();
-  },
-  controllers.register  // Skip validation for now since it's causing issues
-);
 
+router.post("/login", validate(authValidation.login.body), controllers.login);
+router.post("/register", upload.single("profileImage"), controllers.register);
 router.get("/profile", authenticate, controllers.userProfile);
 router.patch("/profile/update", authenticate, validate(authValidation.update), controllers.update);
 router.patch("/update/:id", controllers.updateAdmin);
