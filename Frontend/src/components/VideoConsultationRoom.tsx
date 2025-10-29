@@ -12,10 +12,10 @@ import {
   StreamCall,
   ParticipantView,
 } from '@stream-io/video-react-sdk';
-import { Users, MessageSquare, PhoneOff, Video as VideoIcon, VideoOff, Mic, MicOff } from 'lucide-react';
+import { Users, PhoneOff, Video as VideoIcon, VideoOff, Mic, MicOff } from 'lucide-react';
 import { Button } from './ui/button';
-import { Channel, MessageList, MessageInput } from 'stream-chat-react';
 import { useChatContext } from 'stream-chat-react';
+import { useAuthContext } from '../authContext'; // ← Make sure this path is correct
 
 interface VideoConsultationRoomProps {
   callId: string;
@@ -27,6 +27,9 @@ export default function VideoConsultationRoom({
   onClose,
 }: VideoConsultationRoomProps) {
   const call = useCall();
+  const { client: chatClient } = useChatContext();
+  const { user } = useAuthContext(); // get logged-in user
+
   const {
     useCallCallingState,
     useParticipants,
@@ -38,10 +41,43 @@ export default function VideoConsultationRoom({
   const participants = useParticipants();
   const { microphone, status: micStatus } = useMicrophoneState();
   const { camera, isEnabled: camEnabled } = useCameraState();
-  const { client: chatClient } = useChatContext();
 
   const [showParticipants, setShowParticipants] = useState(false);
   const [showChat, setShowChat] = useState(false);
+
+  // ---------------- JOIN CALL ----------------
+  useEffect(() => {
+    async function initCall() {
+      if (!call || !user?._id) return;
+
+      try {
+        // Fetch call & chat token from backend
+        const response = await fetch(`/api/getCallToken?callId=${callId}`, {
+          headers: {
+            'x-user-id': user._id, // send logged-in user ID
+          },
+        });
+
+        const data = await response.json();
+
+        if (!data.token || !data.chatToken) {
+          console.error("No token returned from server");
+          return;
+        }
+
+        // Join the video call
+        await call.join({ token: data.token });
+
+        // Connect to chat
+        await chatClient.connectUser({ id: user._id }, data.chatToken);
+
+      } catch (err) {
+        console.error("Failed to join call:", err);
+      }
+    }
+
+    initCall();
+  }, [call, callId, user, chatClient]);
 
   const toggleParticipants = useCallback(() => setShowParticipants(p => !p), []);
   const toggleChat = useCallback(() => setShowChat(p => !p), []);
@@ -74,7 +110,6 @@ export default function VideoConsultationRoom({
               ))}
             </div>
           ) : (
-            // for 1 participant or more than 2, use a layout
             participants.length === 1
               ? <SpeakerLayout participantsBarPosition="top" />
               : <PaginatedGridLayout />
@@ -87,7 +122,6 @@ export default function VideoConsultationRoom({
             <CallParticipantsList onClose={toggleParticipants} />
           </div>
         )}
-        
 
         {/* Controls */}
         <div className="absolute bottom-0 left-0 right-0 flex items-center justify-around p-4 bg-black bg-opacity-50">
@@ -95,7 +129,6 @@ export default function VideoConsultationRoom({
             <Button onClick={toggleParticipants} variant="outline" size="sm">
               <Users className="h-4 w-4 mr-1" /> {participants.length}
             </Button>
-
             <Button onClick={toggleMic} variant="outline" size="sm">
               {micStatus === 'disabled' ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
             </Button>

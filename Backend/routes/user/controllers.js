@@ -14,36 +14,43 @@ register: async (req, res) => {
   try {
     let imageUrl = null;
 
-<<<<<<< HEAD
-  if (req.file) {
-  const stream = cloudinary.uploader.upload_stream(
-    { folder: "nutritionists" },
-    (error, result) => {
-      if (error) return reject(error);
-      resolve(result.secure_url); // This URL can be saved in DB
-=======
-    if (req.file) {
-      const uploadDir = path.join("uploads", "profileImages");
-      if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
+if (req.file) {
+  // Upload to Cloudinary
+  imageUrl = await new Promise((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(
+      { folder: "nutritionists" },
+      (error, result) => {
+        if (error) return reject(error);
+        resolve(result.secure_url);
+      }
+    );
 
-      const fileName = `${Date.now()}-${req.file.originalname}`;
-      const filePath = path.join(uploadDir, fileName);
+    // Push file buffer to stream
+    const bufferStream = new (require("stream").Readable)();
+    bufferStream.push(req.file.buffer);
+    bufferStream.push(null);
+    bufferStream.pipe(stream);
+  });
 
-      // Save the buffer to disk
-      fs.writeFileSync(filePath, req.file.buffer);
+  // Save locally
+  const uploadDir = path.join("uploads", "profileImages");
+  if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
 
-      // URL to serve image
-      imageUrl = `/uploads/profileImages/${fileName}`;
->>>>>>> 4467d8ad442453c4b807ab7f0fabb9654a8ff965
-    }
-  );
-
-  const bufferStream = new (require("stream").Readable)();
-  bufferStream.push(req.file.buffer);
-  bufferStream.push(null);
-  bufferStream.pipe(stream);
+  const fileName = `${Date.now()}-${req.file.originalname}`;
+  const filePath = path.join(uploadDir, fileName);
+  fs.writeFileSync(filePath, req.file.buffer);
 }
 
+const ConsultationSchema = new mongoose.Schema({
+  user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+  nutritionist: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+  time: { type: Date, required: true },
+  reason: { type: String, required: true },
+  mode: { type: String, enum: ["online", "offline"], default: "online" },
+  status: { type: String, enum: ["pending", "approved", "denied"], default: "pending" },
+}, { timestamps: true });
+
+const Consultation = mongoose.model("Consultation", ConsultationSchema);
 
     const userData = {
       ...req.body,
@@ -158,6 +165,53 @@ register: async (req, res) => {
       return httpResponse.INTERNAL_SERVER(res, error.message);
     }
   },
+
+  // Send a consultation request
+sendConsultationRequest: async (req, res) => {
+  try {
+    const { nutritionistId, time, reason, mode } = req.body;
+    const request = await Consultation.create({
+      user: req.user._id,
+      nutritionist: nutritionistId,
+      time,
+      reason,
+      mode,
+    });
+    return res.status(201).json({ message: "Request sent", data: request });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "Failed to send request", error: error.message });
+  }
+},
+
+// Get pending requests for a nutritionist
+getPendingConsultations: async (req, res) => {
+  try {
+    const requests = await Consultation.find({ nutritionist: req.user._id, status: "pending" })
+      .populate("user", "-password");
+    return res.status(200).json({ data: requests });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "Failed to fetch requests", error: error.message });
+  }
+},
+
+// Update consultation status
+updateConsultationStatus: async (req, res) => {
+  try {
+    const { requestId, status } = req.body;
+    const updated = await Consultation.findByIdAndUpdate(
+      requestId,
+      { status },
+      { new: true }
+    );
+    return res.status(200).json({ message: "Request updated", data: updated });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "Failed to update request", error: error.message });
+  }
+},
+
 
   analyzeFoodImage: async (req, res) => {
     try {

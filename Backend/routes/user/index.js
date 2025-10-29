@@ -10,6 +10,9 @@ import upload from "../../middlewares/upload.js";
 const router = express.Router();
 
 
+router.post("/consultation/request", authenticate, controllers.sendConsultationRequest);
+router.get("/consultation/pending", authenticate, controllers.getPendingConsultations);
+router.patch("/consultation/updateStatus", authenticate, controllers.updateConsultationStatus);
 
 router.post("/login", validate(authValidation.login.body), controllers.login);
 router.post("/register", upload.single("profileImage"), controllers.register);
