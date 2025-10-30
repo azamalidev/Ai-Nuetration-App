@@ -1,11 +1,14 @@
 
-
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import React, { useState, useEffect } from 'react';
 import { Users, BarChart3, AlertCircle, Search, Filter, Plus, RefreshCw, Utensils, ChefHat, Menu, X } from 'lucide-react';
 import AdminMealsCard from '../components/MealCard';
 import AdminDishCard from '../components/DishCard';
 import AdminUserCard from '../components/UserCard';
 import CreateUserModal from '../components/CreateUserModal';
+import RequestModal from '../components/RequestModal';
+
 
 // Define User type based on API response
 interface User {
@@ -79,6 +82,10 @@ const Dash: React.FC = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [dishes, setDishes] = useState<Dish[]>([]);
   const [meals, setMeals] = useState<MealPlan[]>([]);
+  const [requests, setRequests] = useState<any[]>([]);
+const [selectedRequest, setSelectedRequest] = useState<any | null>(null);
+const [requestModalOpen, setRequestModalOpen] = useState(false);
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('overview');
@@ -117,6 +124,46 @@ const Dash: React.FC = () => {
       console.error('Error fetching users:', err);
     }
   };
+const fetchRequests = async () => {
+  try {
+    setLoading(true);
+
+    // Dummy request data
+    const dummyRequests = [
+      {
+        _id: '1',
+        userName: 'John Doe',
+        type: 'Meal Plan Request',
+        date: new Date().toISOString(),
+      },
+      {
+        _id: '2',
+        userName: 'Jane Smith',
+        type: 'Dietary Advice Request',
+        date: new Date().toISOString(),
+      },
+      {
+        _id: '3',
+        userName: 'Alice Johnson',
+        type: 'Custom Dish Request',
+        date: new Date().toISOString(),
+      },
+    ];
+
+    // Simulate network delay
+    await new Promise((resolve) => setTimeout(resolve, 500));
+
+    setRequests(dummyRequests);
+
+  } catch (err) {
+    console.error('Error fetching requests:', err);
+    setError('Error fetching requests');
+  } finally {
+    setLoading(false);
+  }
+};
+
+
 
   const fetchDishes = async () => {
     try {
@@ -245,7 +292,7 @@ const Dash: React.FC = () => {
 
   useEffect(() => {
     const fetchData = async () => {
-      await Promise.all([fetchUsers(), fetchDishes(), fetchMeals()]);
+      await Promise.all([fetchUsers(), fetchDishes(), fetchMeals(), fetchRequests()]);
     };
     fetchData();
   }, []);
@@ -282,7 +329,8 @@ const Dash: React.FC = () => {
     { id: 'users', label: 'Users', icon: Users },
     { id: 'meals', label: 'Meals', icon: Utensils },
     { id: 'dishes', label: 'Dishes', icon: ChefHat },
-  ];
+  { id: 'requests', label: 'Requests', icon: AlertCircle },
+];
 
   // Show loading state
   if (loading) {
@@ -353,6 +401,37 @@ const Dash: React.FC = () => {
           </div>
         </div>
       </div>
+{/* Create User Modal */}
+{createModal && (
+  <CreateUserModal
+    isOpen={createModal}
+    onClose={() => setCreateModal(false)}
+    onSubmit={createUser}
+    title="Create New User"
+    subtitle="Add a new user to the platform."
+  />
+)}
+
+{/* Request Modal */}
+{requestModalOpen && selectedRequest && (
+  <RequestModal
+    isOpen={requestModalOpen}
+    request={selectedRequest}
+    onClose={() => setRequestModalOpen(false)}
+   onApprove={(id: string) => {
+  setRequests(prev => prev.filter(req => req._id !== id));
+  setRequestModalOpen(false);
+  toast.success('Request approved!', { position: 'top-right' });
+}}
+
+onDeny={(id: string) => {
+  setRequests(prev => prev.filter(req => req._id !== id));
+  setRequestModalOpen(false);
+  toast.error('Request denied!', { position: 'top-right' });
+
+    }}
+  />
+)}
 
       {/* Mobile Navigation Menu */}
       {mobileMenuOpen && (
@@ -443,6 +522,36 @@ const Dash: React.FC = () => {
             </div>
           </div>
         )}
+{activeTab === 'requests' && (
+  <div className="space-y-4 sm:space-y-6">
+    <h2 className="text-xl sm:text-2xl font-bold text-white">User Requests</h2>
+
+    {requests.length === 0 ? (
+      <div className="text-center py-12">
+        <AlertCircle className="mx-auto h-10 w-10 sm:h-12 sm:w-12 text-gray-400 mb-4" />
+        <h3 className="text-base sm:text-lg font-medium text-white mb-2">No requests found</h3>
+        <p className="text-gray-400 text-sm sm:text-base">All user requests will appear here</p>
+      </div>
+    ) : (
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+        {requests.map((req) => (
+          <div
+            key={req._id}
+            className="bg-gray-800 p-4 rounded-lg border border-gray-700 cursor-pointer hover:bg-gray-700"
+            onClick={() => {
+              setSelectedRequest(req);
+              setRequestModalOpen(true);
+            }}
+          >
+            <p className="text-white font-medium">{req.userName}</p>
+            <p className="text-gray-400 text-sm">{req.type}</p>
+            <p className="text-gray-400 text-xs">{new Date(req.date).toLocaleDateString()}</p>
+          </div>
+        ))}
+      </div>
+    )}
+  </div>
+)}
 
         {activeTab === 'users' && (
           <div className="space-y-4 sm:space-y-6">

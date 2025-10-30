@@ -174,6 +174,38 @@ const controller = {
       return res.status(500).json({ message: "Failed to send request", error: error.message });
     }
   },
+sendConsultationRequest: async (req, res) => {
+  try {
+    const { nutritionistId, time, reason, mode } = req.body;
+
+    if (!nutritionistId || !time || !reason) {
+      return res.status(400).json({ message: "Fill all fields" });
+    }
+
+    const user = await UserService.getById(req.user._id);
+    if (!user || user.message === "error") {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Add consultation request to user
+    const updatedUser = await UserService.addConsultationRequest(req.user._id, {
+      nutritionist: nutritionistId,
+      time,
+      reason,
+      mode,
+    });
+
+    if (updatedUser.message === "success") {
+      return res.status(201).json({ message: "Request sent successfully", data: updatedUser.data });
+    } else {
+      return res.status(500).json({ message: "Failed to send request", error: updatedUser.data });
+    }
+
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "Failed to send request", error: error.message });
+  }
+},
 
   // Get pending requests for a nutritionist
   getPendingConsultations: async (req, res) => {

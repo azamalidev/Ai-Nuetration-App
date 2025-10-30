@@ -18,21 +18,32 @@ export const useAuth = () => {
 
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const storedUser = localStorage.getItem('user');
-    const storedToken = localStorage.getItem('authToken');
+useEffect(() => {
+  const storedUser = localStorage.getItem('user');
+  const storedToken = localStorage.getItem('authToken');
 
-    if (storedUser && storedToken) {
-      setAuthState({
-        user: JSON.parse(storedUser),
-        token: storedToken,
-        isLoading: false,
-        isAuthenticated: true,
-      });
-    } else {
-      setAuthState((prev) => ({ ...prev, isLoading: false }));
-    }
-  }, []);
+  let parsedUser: UserProfile | null = null;
+
+  // ✅ Safe parsing
+  try {
+    parsedUser = storedUser ? JSON.parse(storedUser) : null;
+  } catch (e) {
+    console.error('Failed to parse stored user:', e);
+    localStorage.removeItem('user'); // optional: clean up corrupted data
+  }
+
+  if (parsedUser && storedToken) {
+    setAuthState({
+      user: parsedUser,
+      token: storedToken,
+      isLoading: false,
+      isAuthenticated: true,
+    });
+  } else {
+    setAuthState((prev) => ({ ...prev, isLoading: false }));
+  }
+}, []);
+
 
   const login = async (credentials: LoginData): Promise<{ success: boolean; error?: string }> => {
     try {

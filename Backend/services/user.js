@@ -107,6 +107,19 @@ const UserService = {
     }
   },
 
+addConsultationRequest: async (userId, request) => {
+  try {
+    const user = await UserModel.findById(userId);
+    if (!user) return { message: "error", data: "User not found" };
+
+    user.consultationRequests.push(request);
+    await user.save();
+
+    return { message: "success", data: user };
+  } catch (error) {
+    return { message: "error", data: error.message };
+  }
+},
 
   // Get single dish by ID
   getById: async (id) => {

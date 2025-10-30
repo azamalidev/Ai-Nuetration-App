@@ -25,6 +25,7 @@ const isProfileComplete = (user) => {
 
   const client = useStreamVideoClient();
 const [loading, setLoading] = useState(false);
+const baseURL = "http://localhost:5000/api"; // replace with your backend URL
 
   const [call, setCall] = useState<any>(null);
   const [showModal, setShowModal] = useState(false);
@@ -129,49 +130,42 @@ const [loading, setLoading] = useState(false);
     setRequestModal(true);
   };
 
-  const sendRequest = async () => {
-    
-    if (!selectedNutritionist) return;
-    if (!requestTime || !requestReason) {
-      alert('Please enter time and reason for consultation');
-      return;
+ const sendRequest = async () => {
+  if (!requestTime || !requestReason) return alert("Fill all fields");
+
+  const token = localStorage.getItem("authToken");
+  if (!token) return alert("You must be logged in");
+
+  try {
+    const res = await fetch(`${baseURL}/consultation/request`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        nutritionistId: selectedNutritionist._id,
+        time: requestTime,
+        reason: requestReason,
+        mode: consultationMode,
+      }),
+    });
+
+    const data = await res.json();
+    if (res.ok) {
+      alert("Request sent successfully!");
+      setRequestTime("");
+      setRequestReason("");
+      setRequestModalOpen(false);
+    } else {
+      alert(data.error || "Something went wrong");
     }
+  } catch (err) {
+    console.error(err);
+    alert("Request failed, check console");
+  }
+};
 
-    try {
-    setLoading(true); // 🟢 show loader
-      const token = localStorage.getItem('authToken'); // or wherever you store it after login
-      if (!token) {
-        alert("You must be logged in to send a request.");
-        return;
-      }
-
-      const baseURL = import.meta.env.VITE_API_URL;
-
-      const res = await fetch(`${baseURL}/consultation/request`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}` // ← Add the JWT token here
-        },
-        body: JSON.stringify({
-          nutritionistId: selectedNutritionist._id,
-          time: requestTime,
-          reason: requestReason,
-          mode: consultationMode
-        }),
-      });
-
-      if (res.ok) {
-        alert('Request sent successfully!');
-        setRequestModal(false);
-      } else {
-        const errorData = await res.json();
-        alert(errorData.error || 'Failed to send request');
-      }
-    } catch (error) {
-      console.error(error);
-    }
-  };
 
 
   useEffect(() => {

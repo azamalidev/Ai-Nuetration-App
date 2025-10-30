@@ -24,6 +24,16 @@ const schema = Schema({
   yearsOfExperience: { type: Number, required: false },
   certifications: [{ type: String }],
   bio: { type: String, required: false, maxlength: 1000 },
+   consultationRequests: [
+    {
+      nutritionist: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+      time: { type: String, required: true },
+      reason: { type: String, required: true },
+      mode: { type: String, default: "video" },
+      status: { type: String, default: "pending" },
+      createdAt: { type: Date, default: Date.now }
+    }
+  ],
 
 });
 export default mongoose.model("User", schema);

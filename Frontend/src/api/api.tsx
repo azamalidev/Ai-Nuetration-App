@@ -240,6 +240,38 @@ class ApiService {
 
 
 
+// REQUEST-RELATED METHODS
+async getAllRequests(): Promise<ApiResponse> {
+    const response = await fetch(`${this.baseUrl}/requests`, {
+        method: 'GET',
+        headers: getAuthHeaders(),
+    });
+    return handleResponse(response);
+}
+
+async approveRequest(id: string): Promise<ApiResponse> {
+    const response = await fetch(`${this.baseUrl}/requests/${id}/approve`, {
+        method: 'PATCH',
+        headers: getAuthHeaders(),
+    });
+    return handleResponse(response);
+}
+
+async denyRequest(id: string): Promise<ApiResponse> {
+    const response = await fetch(`${this.baseUrl}/requests/${id}/deny`, {
+        method: 'PATCH',
+        headers: getAuthHeaders(),
+    });
+    return handleResponse(response);
+}
+
+async deleteRequest(id: string): Promise<ApiResponse> {
+    const response = await fetch(`${this.baseUrl}/requests/${id}`, {
+        method: 'DELETE',
+        headers: getAuthHeaders(),
+    });
+    return handleResponse(response);
+}
 
 
     // Get user profile
