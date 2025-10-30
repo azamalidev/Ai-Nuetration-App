@@ -145,14 +145,15 @@ const [loading, setLoading] = useState(false);
         return;
       }
 
-      const res = await fetch('http://localhost:50001/api/consultation/request', {
+      const baseURL = import.meta.env.VITE_API_URL;
+
+      const res = await fetch(`${baseURL}/consultation/request`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}` // ← Add the JWT token here
         },
         body: JSON.stringify({
-          userId: user._id,
           nutritionistId: selectedNutritionist._id,
           time: requestTime,
           reason: requestReason,
@@ -303,7 +304,7 @@ const [loading, setLoading] = useState(false);
                   </p>
                 </div>
               </div>
-             <hr className="border-t-4 border-[#059669] my-4 rounded-full" />
+              <hr className="border-t-4 border-[#059669] my-4 rounded-full" />
 
 
               <div className="grid grid-cols-1 gap-2 text-sm text-gray-700">
@@ -315,12 +316,12 @@ const [loading, setLoading] = useState(false);
                   <span className="font-semibold text-emerald-700">Certifications:</span>{" "}
                   {selectedNutritionist.certifications?.join(", ") || "None"}
                 </p>
-               
+
                 <p>
                   <span className="font-semibold text-emerald-700">Email:</span>{" "}
                   {selectedNutritionist.email || "N/A"}
                 </p>
-               
+
               </div>
 
               {selectedNutritionist.bio && (

@@ -160,7 +160,7 @@ const controller = {
   // Send a consultation request
   sendConsultationRequest: async (req, res) => {
     try {
-      const { nutritionistId, time, reason, mode } = req.body;
+      const { nutritionistId, time, reason, mode, userId } = req.body;
       const request = await Consultation.create({
         user: req.user._id,
         nutritionist: nutritionistId,
