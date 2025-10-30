@@ -5,6 +5,8 @@ import loaders from "./loaders/index.js";
 import config from "./config/index.js";
 import userRoute from "./routes/user/index.js";
 import getCallTokenRoute from './routes/getCallToken.js';
+import requestRoutes from "./routes/requestRoutes.js";
+
 
 import path from "path";
 async function startServer() {
@@ -29,6 +31,7 @@ app.listen(50001, () => {
   // ---- MOUNT ROUTES ----  // Make sure multer is applied **inside your route** that handles file uploads
   app.use("/api", userRoute); // e.g., /api/register
 
+app.use("/api", requestRoutes);
 
   app.use("/api", userRoute);  // now /api/login, /api/register, /api/mealGen
   app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));

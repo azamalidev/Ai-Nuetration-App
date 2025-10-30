@@ -1,7 +1,7 @@
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
-
+import { Clipboard } from 'lucide-react';
 import { useAuthContext } from '../authContext';
 import React, { useState, useEffect } from 'react';
 import { Brain, Camera, ShoppingCart, Utensils, Video, Plus, X } from 'lucide-react';
@@ -17,6 +17,9 @@ import {
 import Navbar from '../components/navbar';
 import EmeraldLoader from '../components/loader';
 import VideoConsultation from '../components/VideoConsultation';
+// Dashboard.tsx
+import MyRequests from "../components/MyRequests"; // adjust the path
+
 
 const Dashboard = () => {
   const [foodImage, setFoodImage] = useState<string | null>(null);
@@ -998,6 +1001,12 @@ toast.success('Meal plan approved and saved successfully!');
       title: 'Video Consultation',
       component: () => <VideoConsultation />,
     },
+      {
+    id: 'myRequests',       // <-- Add My Requests here
+    icon: Clipboard,
+    title: 'My Requests',
+    component: () => <MyRequests />,
+  },
   ];
 
   return (

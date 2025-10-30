@@ -11,7 +11,7 @@ import EmeraldLoader from '../components/loader';
 
 
 
-export default function VideoConsultation({ onClose }: { onClose?: () => void }) {
+export default function VideoConsultation({ onClose, onRequestSent }: { onClose?: () => void; onRequestSent?: () => void }) {
   const { user } = useAuthContext();
   // ✅ Check if the user's medical profile is complete
 const isProfileComplete = (user) => {
@@ -130,8 +130,9 @@ const baseURL = "http://localhost:5000/api"; // replace with your backend URL
     setRequestModal(true);
   };
 
- const sendRequest = async () => {
-  if (!requestTime || !requestReason) return alert("Fill all fields");
+const sendRequest = async () => {
+  if (!requestTime || !requestReason)
+    return alert("Please fill all fields");
 
   const token = localStorage.getItem("authToken");
   if (!token) return alert("You must be logged in");
@@ -141,7 +142,7 @@ const baseURL = "http://localhost:5000/api"; // replace with your backend URL
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${token}`,
+        Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify({
         nutritionistId: selectedNutritionist._id,
@@ -152,19 +153,24 @@ const baseURL = "http://localhost:5000/api"; // replace with your backend URL
     });
 
     const data = await res.json();
+
     if (res.ok) {
       alert("Request sent successfully!");
       setRequestTime("");
       setRequestReason("");
-      setRequestModalOpen(false);
+      setRequestModal(false);
+
+      // ✅ Trigger parent to refresh MyRequests
+      onRequestSent?.(data.request); // pass the request from backend// <-- this calls handleRequestSent in parent
     } else {
       alert(data.error || "Something went wrong");
     }
   } catch (err) {
     console.error(err);
-    alert("Request failed, check console");
+    alert("Request failed");
   }
 };
+
 
 
 
