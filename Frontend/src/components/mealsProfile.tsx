@@ -20,7 +20,7 @@ export default function MealsComponent({
     loading = false,
     title = "My Meals",
     subtitle = "Manage your meal plans and dishes",
-    onDelete = (id) => { },
+    onDelete = (id:any) => { },
 }) {
     const meals = data || [];
     const [filteredMeals, setFilteredMeals] = useState([]);
@@ -37,7 +37,6 @@ export default function MealsComponent({
 
     const handleDeleteConfirm = async () => {
         if (!deleteConfirmation) return;
-        console.log("deleteConfirmation", deleteConfirmation)
 
         const mealId = deleteConfirmation._id;
         setIsDeleting(prev => new Set(prev).add(mealId));

@@ -1,7 +1,7 @@
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
-import { Clipboard } from 'lucide-react';
+import { Clipboard, ClipboardList } from 'lucide-react';
 import { useAuthContext } from '../authContext';
 import React, { useState, useEffect } from 'react';
 import { Brain, Camera, ShoppingCart, Utensils, Video, Plus, X } from 'lucide-react';
@@ -19,6 +19,7 @@ import EmeraldLoader from '../components/loader';
 import VideoConsultation from '../components/VideoConsultation';
 // Dashboard.tsx
 import MyRequests from "../components/MyRequests"; // adjust the path
+import DocterRequests from '../components/RequestsForDocters';
 
 
 const Dashboard = () => {
@@ -51,7 +52,7 @@ const Dashboard = () => {
 
 
   const { isLoading } = useAuthContext();
-  
+
   // ✅ added: helper to check whether user's medical/profile fields are filled
   const isProfileComplete = () => {
     if (!user) return false;
@@ -62,16 +63,16 @@ const Dashboard = () => {
       return val !== undefined && val !== null && val !== '';
     });
   }; // ✅ added
-const handleFeatureClick = (featureId: string) => {
-  setSelectedFeature(featureId); // Tab activates
-  if (!isProfileComplete()) {
-    toast.error('Please complete your medical profile first.');
-    return; // Stop feature content from loading
-  }
-  // Feature content will render normally if profile complete
+  const handleFeatureClick = (featureId: string) => {
+    setSelectedFeature(featureId); // Tab activates
+    if (!isProfileComplete()) {
+      toast.error('Please complete your medical profile first.');
+      return; // Stop feature content from loading
+    }
+    // Feature content will render normally if profile complete
 
-  // else, feature content will render normally
-};
+    // else, feature content will render normally
+  };
 
 
   const fetchProfile = async () => {
@@ -79,7 +80,7 @@ const handleFeatureClick = (featureId: string) => {
       setLoading(true);
       const { apiService } = await import('../api/api');
       const response = await apiService.getUserProfile();
-    
+
 
       if (response?.data) {
         const userData = {
@@ -192,7 +193,7 @@ const handleFeatureClick = (featureId: string) => {
       const response = await apiService.generateMealPlan(userProfile);
       setMealPlan(response.data);
     } catch (err) {
-toast.error(err instanceof Error ? err.message : 'Failed to generate meal plan');
+      toast.error(err instanceof Error ? err.message : 'Failed to generate meal plan');
     } finally {
       setLoading(false);
     }
@@ -267,7 +268,7 @@ toast.error(err instanceof Error ? err.message : 'Failed to generate meal plan')
       await apiService.createMealPlan(mealPlanData);
 
       setMealPlanApproved(true); // Set approval state to true
-toast.success('Meal plan approved and saved successfully!');
+      toast.success('Meal plan approved and saved successfully!');
 
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to approve meal plan');
@@ -912,7 +913,15 @@ toast.success('Meal plan approved and saved successfully!');
     URL.revokeObjectURL(url);
   };
 
-  const features = [
+  let userData = localStorage.getItem('user');
+  const userInfo = userData ? JSON.parse(userData) : null;
+
+  const features = userInfo.role == "NUTRITIONIST" ? [{
+    id: 'consultation-requests',
+    icon: ClipboardList,
+    title: 'Consultaion Requests',
+    component: DocterRequests,
+  },] : [
     {
       id: 'meal-planning',
       icon: Brain,
@@ -1011,48 +1020,44 @@ toast.success('Meal plan approved and saved successfully!');
       title: 'Video Consultation',
       component: () => <VideoConsultation />,
     },
-      {
-    id: 'myRequests',       // <-- Add My Requests here
-    icon: Clipboard,
-    title: 'My Requests',
-    component: () => <MyRequests />,
-  },
+    {
+      id: 'myRequests',       // <-- Add My Requests here
+      icon: Clipboard,
+      title: 'My Requests',
+      component: () => <MyRequests />,
+    },
   ];
 
+
+  const SelectedFeature = features.find((f) => f.id === selectedFeature)?.component;
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-       <div className="flex overflow-x-auto space-x-4 pb-4">
-  {features.map((feature) => {
-    const Icon = feature.icon;
-    return (
-      <button
-        key={feature.id}
-        onClick={() => handleFeatureClick(feature.id)} // <-- Use the new helper here
-        className={`flex items-center space-x-2 px-4 py-2 rounded-lg whitespace-nowrap transition-colors ${
-          selectedFeature === feature.id
-          
-            ? 'bg-emerald-600 text-white'
-            : 'bg-white text-gray-700 hover:bg-gray-50'
-        }`}
-      >
-        <Icon className="h-5 w-5" />
-        <span>{feature.title}</span>
-      </button>
-    );
-  })}
-</div>
+        <div className="flex overflow-x-auto space-x-4 pb-4">
+          {features.map((feature) => {
+            const Icon = feature.icon;
+            return (
+              <button
+                key={feature.id}
+                onClick={() => handleFeatureClick(feature.id)} // <-- Use the new helper here
+                className={`flex items-center space-x-2 px-4 py-2 rounded-lg whitespace-nowrap transition-colors ${selectedFeature === feature.id
+
+                  ? 'bg-emerald-600 text-white'
+                  : 'bg-white text-gray-700 hover:bg-gray-50'
+                  }`}
+              >
+                <Icon className="h-5 w-5" />
+                <span>{feature.title}</span>
+              </button>
+            );
+          })}
+        </div>
 
 
         <div className="mt-8">
-  {isProfileComplete()
-    ? features.find((f) => f.id === selectedFeature)?.component() // Render normally
-    : <div className="p-6 bg-white rounded-lg shadow-md text-center text-gray-600">
-        No data to display. Please complete your medical profile.
-      </div>
-  }
-</div>
+          {SelectedFeature ? <SelectedFeature /> : null}
+        </div>
 
       </main>
     </div>

@@ -30,7 +30,7 @@ async function startServer() {
   await loaders.init({ expressApp: app });
 
   // ---- MOUNT ROUTES ----  // Make sure multer is applied **inside your route** that handles file uploads
-  app.use("/api", userRoute); // e.g., /api/register
+ 
 
   app.use("/api", requestRoutes);
 

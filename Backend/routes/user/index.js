@@ -9,11 +9,7 @@ import upload from "../../middlewares/upload.js";
 
 const router = express.Router();
 
-router.post(
-  "/consultation/request",
-  authenticate,
-  controllers.sendConsultationRequest
-);
+
 router.get(
   "/consultation/pending",
   authenticate,
@@ -27,7 +23,6 @@ router.patch(
 
 router.post("/login", validate(authValidation.login.body), controllers.login);
 router.post("/register", upload.single("profileImage"), controllers.register);
-
 router.get("/get-docter-list", controllers.getNutratious);
 router.get("/profile", authenticate, controllers.userProfile);
 router.patch("/profile/update", authenticate, controllers.update);

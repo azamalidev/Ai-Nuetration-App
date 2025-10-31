@@ -9,14 +9,15 @@ import VideoConsultationRoom from './VideoConsultationRoom';
 import { Button } from './ui/button';
 import { Video, Phone, Clipboard, X, Briefcase } from 'lucide-react';
 import EmeraldLoader from '../components/loader';
+import { toast, ToastContainer } from 'react-toastify';
 
 
 
 
- interface VideoConsultationProps {
+interface VideoConsultationProps {
   onClose?: () => void;
   onRequestSent?: (req: any) => void;
-  fetchRequests: () => void;           
+  fetchRequests: () => void;
   setActiveTab: (tab: 'video' | 'myRequests') => void;
 }
 
@@ -25,14 +26,14 @@ export default function VideoConsultation({
   onRequestSent,
   fetchRequests,  // <-- add here
   setActiveTab,   // <-- add here
-}: VideoConsultationProps) {
+}: any) {
 
 
 
 
   const client = useStreamVideoClient();
-const [loading, setLoading] = useState(false);
-const baseURL = "http://localhost:5000/api"; // replace with your backend URL
+  const [loading, setLoading] = useState(false);
+  const API_BASE_URL = import.meta.env.VITE_API_URL// replace with your backend URL
   const { user } = useAuthContext();
   const [call, setCall] = useState<any>(null);
   const [showModal, setShowModal] = useState(false);
@@ -50,9 +51,9 @@ const baseURL = "http://localhost:5000/api"; // replace with your backend URL
 
   useEffect(() => {
     const fetchNutritionists = async () => {
-    try {
-      setLoading(true); // start loader
-      
+      try {
+        setLoading(true); // start loader
+
         const token = localStorage.getItem('authToken');
         if (!token) {
           console.error("You must be logged in to fetch nutritionists.");
@@ -65,7 +66,7 @@ const baseURL = "http://localhost:5000/api"; // replace with your backend URL
           method: 'GET',
           headers: {
             'Authorization': `Bearer ${token}`,
-            
+
           },
         });
 
@@ -79,8 +80,8 @@ const baseURL = "http://localhost:5000/api"; // replace with your backend URL
         console.error('Error fetching nutritionists:', error);
       }
       finally {
-  setLoading(false);
-}
+        setLoading(false);
+      }
     };
 
     fetchNutritionists();
@@ -136,47 +137,47 @@ const baseURL = "http://localhost:5000/api"; // replace with your backend URL
     setConsultationMode('Video');
     setRequestModal(true);
   };
-const sendRequest = async () => {
-  if (!requestTime || !requestReason) {
-    return alert("Please fill all fields");
-  }
+  const sendRequest = async () => {
+    if (!requestReason) {
+      return toast.error("Please provide a reason for consultation");
+    } if (consultationMode === "Video" && !requestTime) {
+      return toast.error("Please select preferred time for video consultation");
+    }
 
-  const token = localStorage.getItem("authToken");
-  if (!token) return alert("You must be logged in");
+    const token = localStorage.getItem("authToken");
+    if (!token) return alert("You must be logged in");
 
-  try {
-    const res = await fetch(`${baseURL}/consultation/my-request`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({
-        nutritionistId: selectedNutritionist._id,
-        time: requestTime,
-        reason: requestReason,
-        mode: consultationMode,
-      }),
-    });
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/consultation/request`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          nutritionistId: selectedNutritionist._id,
+          time: requestTime,
+          reason: requestReason,
+          mode: consultationMode,
+        }),
+      });
 
-    const data = await res.json(); // ✅ now inside async function
 
-    if (res.ok) {
-      alert("Request sent successfully!");
+      const data = await res.json(); // ✅ now inside async function
+      toast.success('Consultation Request Sent!', { position: 'top-right' });
       setRequestTime("");
       setRequestReason("");
       setRequestModal(false);
 
       // Trigger parent to refresh MyRequests
       onRequestSent?.(data.data || data.request);
-    } else {
-      alert(data.error || "Something went wrong");
+
+    } catch (err) {
+      console.error(err);
+      toast.success(`Error : ${err}`, { position: 'top-right' });
+
     }
-  } catch (err) {
-    console.error(err);
-    alert("Request failed");
-  }
-};
+  };
 
 
 
@@ -215,11 +216,11 @@ const sendRequest = async () => {
         <div className="fixed inset-0 z-40">
           <StreamCall call={call}>
             <VideoConsultationRoom onClose={handleEnd}
-             fetchRequests={fetchRequests} 
-  setActiveTab={setActiveTab} 
-  onRequestSent={handleRequestSent}  />
+              fetchRequests={fetchRequests}
+              setActiveTab={setActiveTab}
+              onRequestSent={handleRequestSent} />
           </StreamCall>
-          
+
         </div>
       </>
     );
@@ -227,64 +228,75 @@ const sendRequest = async () => {
   const baseUrl = import.meta.env.VITE_API_URL;
   return (
     <div className="p-6 bg-white rounded-lg shadow-md space-y-6">
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop
+        closeOnClick
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="colored"
+      />
       <h3 className="text-xl font-semibold mb-4">Video Consultation</h3>
 
 
 
 
-     {/* Nutritionist Cards */}
-{loading ? (
-  <div className="flex justify-center items-center h-[50vh]">
-    <EmeraldLoader />
-  </div>
-) : (
-  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8 mt-8">
-    {nutritionists.map((n) => (
-      <div
-        key={n._id}
-        onClick={() => openRequestModal(n)}
-        className="bg-white rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 cursor-pointer border border-transparent hover:border-emerald-200"
-      >
-        <div className="p-6 flex flex-col items-center text-center">
-          <div className="relative">
-            <img
-              src={`${baseUrl}${n.profileImage}`}
-              alt={n.name}
-              className="w-24 h-24 rounded-full object-cover border-4 border-emerald-100 shadow-sm"
-            />
-          </div>
-
-          <h4 className="text-lg font-semibold text-gray-800 mt-3">{n.name}</h4>
-          <p className="text-sm text-gray-500">{n.qualifications}</p>
-
-          <div className="flex items-center justify-center gap-2 mt-2 text-xs text-emerald-700 font-medium">
-            <Briefcase size={14} />
-            <span>
-              {n.yearsOfExperience} {n.yearsOfExperience === 1 ? 'Year' : 'Years'} Experience
-            </span>
-          </div>
-
-          {n.certifications?.length > 0 && (
-            <div className="flex flex-wrap justify-center mt-3 gap-2">
-              {n.certifications.map((cert) => (
-                <span
-                  key={cert}
-                  className="text-xs bg-emerald-50 text-emerald-700 px-3 py-1 rounded-full border border-emerald-100"
-                >
-                  {cert}
-                </span>
-              ))}
-            </div>
-          )}
-
-          <button className="mt-4 px-4 py-2 bg-emerald-600 text-white text-sm rounded-full hover:bg-emerald-700 transition">
-            Consult me
-          </button>
+      {/* Nutritionist Cards */}
+      {loading ? (
+        <div className="flex justify-center items-center h-[50vh]">
+          <EmeraldLoader />
         </div>
-      </div>
-    ))}
-  </div>
-)}
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8 mt-8">
+          {nutritionists.map((n) => (
+            <div
+              key={n._id}
+              onClick={() => openRequestModal(n)}
+              className="bg-white rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 cursor-pointer border border-transparent hover:border-emerald-200"
+            >
+              <div className="p-6 flex flex-col items-center text-center">
+                <div className="relative">
+                  <img
+                    src={`${baseUrl}${n.profileImage}`}
+                    alt={n.name}
+                    className="w-24 h-24 rounded-full object-cover border-4 border-emerald-100 shadow-sm"
+                  />
+                </div>
+
+                <h4 className="text-lg font-semibold text-gray-800 mt-3">{n.name}</h4>
+                <p className="text-sm text-gray-500">{n.qualifications}</p>
+
+                <div className="flex items-center justify-center gap-2 mt-2 text-xs text-emerald-700 font-medium">
+                  <Briefcase size={14} />
+                  <span>
+                    {n.yearsOfExperience} {n.yearsOfExperience === 1 ? 'Year' : 'Years'} Experience
+                  </span>
+                </div>
+
+                {n.certifications?.length > 0 && (
+                  <div className="flex flex-wrap justify-center mt-3 gap-2">
+                    {n.certifications.map((cert: any) => (
+                      <span
+                        key={cert}
+                        className="text-xs bg-emerald-50 text-emerald-700 px-3 py-1 rounded-full border border-emerald-100"
+                      >
+                        {cert}
+                      </span>
+                    ))}
+                  </div>
+                )}
+
+                <button className="mt-4 px-4 py-2 bg-emerald-600 text-white text-sm rounded-full hover:bg-emerald-700 transition">
+                  Consult me
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
 
 
 
@@ -347,19 +359,43 @@ const sendRequest = async () => {
             </div>
 
             {/* Form Fields */}
-            <div className="space-y-4">
+            <div className="space-y-5">
+              {/* Consultation Mode */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Preferred Time
+                  Consultation Mode
                 </label>
-                <input
-                  type="time"
-                  value={requestTime}
-                  onChange={(e) => setRequestTime(e.target.value)}
-                  className="w-full border border-gray-300 focus:border-emerald-400 focus:ring-emerald-300 rounded-lg px-3 py-2 text-sm outline-none transition"
-                />
+                <select
+                  value={consultationMode}
+                  onChange={(e) => setConsultationMode(e.target.value)}
+                  className="w-full border border-gray-300 focus:border-emerald-400 focus:ring-emerald-300 rounded-lg px-3 py-2 text-sm outline-none transition bg-white"
+                >
+                  <option value="">Select Mode</option>
+                  <option value="Video">Video</option>
+                  <option value="Chat">Chat</option>
+                </select>
               </div>
 
+              {/* Conditionally Show Preferred Time */}
+              {consultationMode === "Video" && (
+                <div
+                  className="animate-fadeIn"
+                  style={{ animation: "fadeIn 0.2s ease-in-out" }}
+                >
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Preferred Time <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="time"
+                    required={consultationMode === "Video"}
+                    value={requestTime}
+                    onChange={(e) => setRequestTime(e.target.value)}
+                    className="w-full border border-gray-300 focus:border-emerald-400 focus:ring-emerald-300 rounded-lg px-3 py-2 text-sm outline-none transition"
+                  />
+                </div>
+              )}
+
+              {/* Reason for Consultation */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Reason for Consultation
@@ -371,21 +407,8 @@ const sendRequest = async () => {
                   className="w-full border border-gray-300 focus:border-emerald-400 focus:ring-emerald-300 rounded-lg px-3 py-2 text-sm h-24 outline-none transition resize-none"
                 />
               </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Consultation Mode
-                </label>
-                <select
-                  value={consultationMode}
-                  onChange={(e) => setConsultationMode(e.target.value)}
-                  className="w-full border border-gray-300 focus:border-emerald-400 focus:ring-emerald-300 rounded-lg px-3 py-2 text-sm outline-none transition"
-                >
-                  <option>Video</option>
-                  <option>Chat</option>
-                </select>
-              </div>
             </div>
+
 
             {/* Footer Buttons */}
             <div className="flex justify-end gap-3 mt-6">

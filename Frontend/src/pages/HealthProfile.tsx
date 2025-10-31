@@ -416,8 +416,8 @@ function HealthProfile() {
                       Certifications
                     </p>
                     <div className="text-lg text-emerald-900 font-medium">
-                      {profileData.certifications &&
-                      profileData.certifications.length > 0 ? (
+                      {profileData?.certifications &&
+                      profileData?.certifications?.length > 0 ? (
                         <div className="flex flex-wrap gap-2">
                           {profileData?.certifications?.map(
                             (cert: string, index: number) => (
