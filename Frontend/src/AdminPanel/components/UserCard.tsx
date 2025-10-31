@@ -75,11 +75,24 @@ export default function AdminUserCard({
             <div className="block md:hidden bg-gray-800 rounded-lg p-4 mb-4 hover:bg-gray-700 transition-colors">
                 <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center space-x-3">
-                        <div className="h-10 w-10 rounded-full bg-gradient-to-r from-emerald-400 to-teal-500 flex items-center justify-center flex-shrink-0">
-                            <span className="text-white font-medium text-sm">
-                                {(user.name || user.email).charAt(0).toUpperCase()}
-                            </span>
-                        </div>
+                      <div className="h-10 w-10 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden bg-gradient-to-r from-emerald-400 to-teal-500">
+  {user.profileImage ? (
+    <img
+      src={
+        user.profileImage.startsWith("http")
+          ? user.profileImage
+          : `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}${user.profileImage}`
+      }
+      alt={user.name || "Profile"}
+      className="h-full w-full object-cover"
+    />
+  ) : (
+    <span className="text-white font-medium text-sm">
+      {(user.name || user.email).charAt(0).toUpperCase()}
+    </span>
+  )}
+</div>
+
                         <div className="min-w-0 flex-1">
                             <div className="text-sm font-medium text-white truncate">
                                 {user.name || 'No Name'}
@@ -222,11 +235,44 @@ export default function AdminUserCard({
                         <div className="p-4 lg:p-6 space-y-6">
                             {/* Profile Header */}
                             <div className="flex flex-col sm:flex-row items-center sm:items-start space-y-4 sm:space-y-0 sm:space-x-4">
-                                <div className="h-16 w-16 rounded-full bg-gradient-to-r from-emerald-400 to-teal-500 flex items-center justify-center flex-shrink-0">
-                                    <span className="text-white font-medium text-xl">
-                                        {(user.name || user.email).charAt(0).toUpperCase()}
-                                    </span>
-                                </div>
+                                <div className="h-10 w-10 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden bg-gradient-to-r from-emerald-400 to-teal-500">
+ 
+<div className="flex flex-col sm:flex-row items-center sm:items-start space-y-4 sm:space-y-0 sm:space-x-4">
+  <div className="h-10 w-10 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden bg-gradient-to-r from-emerald-400 to-teal-500">
+    {user.profileImage ? (
+      <>
+        {console.log(
+          "Image URL →",
+          `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}${user.profileImage}`
+        )}
+
+        <img
+          src={
+            user.profileImage.startsWith("http")
+              ? user.profileImage
+              : `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}${user.profileImage}`
+          }
+          alt={user.name || "Profile"}
+          className="h-full w-full object-cover"
+        />
+      </>
+    ) : (
+      <span className="text-white font-medium text-sm">
+        {(user.name || user.email).charAt(0).toUpperCase()}
+      </span>
+    )}
+  </div>
+
+  <div className="text-center sm:text-left">
+    <h4 className="text-xl font-semibold text-white">
+      {user.name || 'No Name'}
+    </h4>
+    <p className="text-gray-400 break-all">{user.email}</p>
+  </div>
+</div>
+
+</div>
+
                                 <div className="text-center sm:text-left">
                                     <h4 className="text-xl font-semibold text-white">
                                         {user.name || 'No Name'}

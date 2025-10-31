@@ -1,4 +1,5 @@
 'use client';
+import "../index.css";
 
 import { useState, useEffect } from 'react';
 import { useAuthContext } from '../authContext';
@@ -303,7 +304,7 @@ export default function VideoConsultation({
       {/* Request Modal */}
       {requestModal && selectedNutritionist && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-6 relative overflow-y-auto max-h-[90vh] transition-all">
+<div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-6 relative overflow-y-auto max-h-[90vh] scrollbar-hide transition-all">
             {/* Close Button */}
             <button
               className="absolute top-3 right-3 text-gray-500 hover:text-emerald-700 transition"

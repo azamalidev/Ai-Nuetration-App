@@ -19,6 +19,7 @@ async function startServer() {
     })
   );
   app.use("/api/getCallToken", getCallTokenRoute);
+app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 
   app.listen(50001, () => {
     console.log("Server running on port 5000");

@@ -35,6 +35,29 @@
   color: white;
   height: 100%;
 }
+/* Hide scrollbar but keep scroll functionality */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none; /* for Internet Explorer, Edge */
+  scrollbar-width: none; /* for Firefox */
+}
+
+/* Prevent background scroll when modal is open */
+body.modal-open {
+  overflow: hidden;
+}
+
+/* Hide scrollbar but keep scroll functionality */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-hide {
+  -ms-overflow-style: none; /* for Internet Explorer and Edge */
+  scrollbar-width: none; /* for Firefox */
+}
 
 .str-video__call-controls__button {
   height: 40px;
