@@ -29,9 +29,10 @@ const Dashboard = () => {
   const [analysisResult, setAnalysisResult] = useState<any | null>(null);
   const [analysisLoading, setAnalysisLoading] = useState(false);
   const [analysisError, setAnalysisError] = useState<string | null>(null);
+  let userData = localStorage.getItem('user');
+  const userInfo = userData ? JSON.parse(userData) : null;
 
-
-  const [selectedFeature, setSelectedFeature] = useState('meal-planning');
+  const [selectedFeature, setSelectedFeature] = useState(userInfo?.role == "NUTRITIONIST" ? 'consultation-requests' : 'meal-planning');
   const [mealPlan, setMealPlan] = useState<MealPlan | null>(null);
   const [recipes, setRecipes] = useState<RecipeRecommendation[]>([]);
   const [groceryList, setGroceryList] = useState<GroceryItem[]>([]);
@@ -231,7 +232,6 @@ const Dashboard = () => {
       toast.error('No meal plan to approve or user not logged in');
       return;
     }
-    console.log("ansnuas", user)
 
     setApprovingPlan(true);
     setError(null);
@@ -252,7 +252,7 @@ const Dashboard = () => {
 
       console.log("savedBreakfast, savedLunch, savedDinner", savedBreakfast, savedLunch, savedDinner)
       // Construct the meal plan data including user ID and dish IDs
-      const mealPlanData = {
+      const mealPlanData: any = {
         user_id: user.id,
         plan_date: new Date().toISOString().split('T')[0],
         breakfast_dish_id: savedBreakfast.data._id,
@@ -913,8 +913,7 @@ const Dashboard = () => {
     URL.revokeObjectURL(url);
   };
 
-  let userData = localStorage.getItem('user');
-  const userInfo = userData ? JSON.parse(userData) : null;
+
 
   const features = userInfo.role == "NUTRITIONIST" ? [{
     id: 'consultation-requests',

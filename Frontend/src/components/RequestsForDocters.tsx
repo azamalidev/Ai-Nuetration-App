@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import dayjs from 'dayjs';
 import { toast } from "react-toastify";
+import { MessageCircle, Video } from 'lucide-react';
 
 interface Request {
   _id: string;
@@ -34,17 +35,21 @@ const DocterRequests = () => {
     }
   };
 
-  const handleAction = async (id: string, status: 'Approved' | 'Rejected') => {
+  const handleAction = async (id: string, time: any, status: 'Approved' | 'Rejected') => {
     const token = localStorage.getItem('authToken');
     try {
-      const res = await fetch(`${API_BASE_URL}/api/consultation/request/${id}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ status }),
-      });
+      const res = await fetch(
+        `${API_BASE_URL}/api/consultation/request/${id}?status=${encodeURIComponent(status)}&time=${encodeURIComponent(time)}`,
+        {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+
       const data = await res.json();
       if (res.ok) {
         toast.success(`Request ${status}`);
@@ -77,107 +82,140 @@ const DocterRequests = () => {
             >
               {/* Left: Info */}
               <div className="flex flex-col">
+                {/* User Info */}
                 <div className="flex items-center gap-3">
                   <div className="flex flex-col">
                     <h4 className="text-sm font-semibold text-emerald-700">
-                      {req.userInfo?.name || 'Unknown User'}
+                      {req.userInfo?.name || "Unknown User"}
                     </h4>
                     <p className="text-xs text-gray-500">{req.userInfo?.email}</p>
                   </div>
                 </div>
 
+                {/* Request Details */}
                 <div className="flex flex-wrap gap-x-4 mt-2 items-center text-xs text-gray-700">
                   {/* Editable Time */}
-                  <div className="flex items-center gap-1">
-                    <span className="text-emerald-700 font-medium">Time:</span>
-                    <input
-                      type="time"
-                      value={req.time}
-                      onChange={(e) => {
-                        const newTime = e.target.value;
-                        setRequests((prev) =>
-                          prev.map((r, i) =>
-                            i === index ? { ...r, time: newTime } : r
-                          )
-                        );
-                      }}
-                      onBlur={async (e) => {
-                        const newTime = e.target.value;
-                        try {
-                          const token = localStorage.getItem('authToken');
-                          const res = await fetch(
-                            `${API_BASE_URL}/api/consultation/requests/${req._id}`,
-                            {
-                              method: 'PATCH',
-                              headers: {
-                                'Content-Type': 'application/json',
-                                Authorization: `Bearer ${token}`,
-                              },
-                              body: JSON.stringify({ time: newTime }),
-                            }
+                  {req.time && (
+                    <div className="flex items-center gap-1">
+                      <input
+                        type="time"
+                        value={req.time}
+                        disabled={req.status !== "Pending"} // ⛔ Disable if not pending
+                        onChange={(e) => {
+                          const newTime = e.target.value;
+                          setRequests((prev) =>
+                            prev.map((r, i) =>
+                              i === index ? { ...r, time: newTime } : r
+                            )
                           );
-                          const data = await res.json();
-                          if (res.ok) {
-                            toast.success('Time updated successfully');
-                          } else {
-                            toast.error(data.error || 'Failed to update time');
+                        }}
+                        onBlur={async (e) => {
+                          const newTime = e.target.value;
+                          try {
+                            const token = localStorage.getItem("authToken");
+                            const res = await fetch(
+                              `${API_BASE_URL}/api/consultation/requests/${req._id}`,
+                              {
+                                method: "PATCH",
+                                headers: {
+                                  "Content-Type": "application/json",
+                                  Authorization: `Bearer ${token}`,
+                                },
+                                body: JSON.stringify({ time: newTime }),
+                              }
+                            );
+                            const data = await res.json();
+                            if (res.ok) toast.success("Time updated successfully");
+                            else toast.error(data.error || "Failed to update time");
+                          } catch {
+                            toast.error("Server error");
                           }
-                        } catch {
-                          toast.error('Server error');
-                        }
-                      }}
-                      className="border border-emerald-300 rounded-lg px-2 py-0.5 text-xs text-gray-700 focus:outline-none focus:ring-1 focus:ring-emerald-400 transition"
-                    />
+                        }}
+                        className={`border rounded-md px-2 py-0.5 text-xs transition ${req.status === "Pending"
+                            ? "border-emerald-300 text-gray-700 focus:outline-none focus:ring-1 focus:ring-emerald-400"
+                            : "border-gray-200 text-gray-400 bg-gray-50 cursor-not-allowed"
+                          }`}
+                      />
+                    </div>
+                  )}
+
+                  {/* Mode (non-clickable badge) */}
+                  <div className="flex items-center gap-1">
+                    {req.mode === "Video" ? (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-emerald-50 border border-emerald-100 text-emerald-700 rounded-full text-xs font-medium cursor-default select-none">
+                        <Video size={13} />
+                        Video
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-50 border border-blue-100 text-blue-700 rounded-full text-xs font-medium cursor-default select-none">
+                        <MessageCircle size={13} />
+                        Chat
+                      </span>
+                    )}
                   </div>
 
-                  <div>
-                    <span className="text-emerald-700 font-medium">Mode:</span>{' '}
-                    {req.mode}
-                  </div>
-
+                  {/* Reason */}
                   <div className="truncate max-w-[180px] text-gray-600">
-                    <span className="text-emerald-700 font-medium">Reason:</span>{' '}
-                    {req.reason || 'N/A'}
+                    {req.reason || "N/A"}
                   </div>
                 </div>
 
+                {/* Status & Date */}
                 <div className="mt-2 flex items-center gap-2 text-[11px] text-gray-500">
                   <span
-                    className={`px-2 py-0.5 rounded-full font-medium ${req.status === 'Approved'
-                        ? 'bg-green-100 text-green-700'
-                        : req.status === 'Rejected'
-                          ? 'bg-red-100 text-red-700'
-                          : 'bg-yellow-100 text-yellow-700'
+                    className={`px-2 py-0.5 rounded-full font-medium ${req.status === "Approved"
+                        ? "bg-green-100 text-green-700"
+                        : req.status === "Rejected"
+                          ? "bg-red-100 text-red-700"
+                          : "bg-yellow-100 text-yellow-700"
                       }`}
                   >
-                    {req.status || 'Pending'}
+                    {req.status || "Pending"}
                   </span>
                   {req.createdAt && (
-                    <span>{dayjs(req.createdAt).format('MMM D, YYYY')}</span>
+                    <span>{dayjs(req.createdAt).format("MMM D, YYYY")}</span>
                   )}
                 </div>
               </div>
 
-              {/* Right: Action Buttons */}
-              {req.status === 'Pending' && (
-                <div className="flex gap-2">
+              {/* Right: Actions */}
+              <div className="flex gap-2">
+                {req.status === "Pending" ? (
+                  <>
+                    <button
+                      onClick={() => handleAction(req._id, req?.time, "Approved")}
+                      className="px-3 py-1 bg-green-600 text-white text-xs font-medium rounded-lg hover:bg-green-700 transition"
+                    >
+                      Approve
+                    </button>
+                    <button
+                      onClick={() => handleAction(req._id, req?.time, "Rejected")}
+                      className="px-3 py-1 bg-red-600 text-white text-xs font-medium rounded-lg hover:bg-red-700 transition"
+                    >
+                      Reject
+                    </button>
+                  </>
+                ) : req.status === "Approved" && req.mode === "Chat" ? (
                   <button
-                    onClick={() => handleAction(req._id, 'Approved')}
-                    className="px-3 py-1 bg-green-600 text-white text-xs font-medium rounded-lg hover:bg-green-700 transition"
+                    className="px-3 py-1 bg-blue-600 text-white text-xs font-medium rounded-lg cursor-default opacity-90"
                   >
-                    Approve
+                    <MessageCircle size={13} className="inline mr-1" />
+                    Chat
                   </button>
+                ) : req.status === "Approved" && req.mode === "Video" ? (
                   <button
-                    onClick={() => handleAction(req._id, 'Rejected')}
-                    className="px-3 py-1 bg-red-600 text-white text-xs font-medium rounded-lg hover:bg-red-700 transition"
+                    className="px-3 py-1 bg-emerald-600 text-white text-xs font-medium rounded-lg cursor-default opacity-90"
                   >
-                    Reject
+                    <Video size={13} className="inline mr-1" />
+                    Video
                   </button>
-                </div>
-              )}
+                ) : null}
+              </div>
             </div>
           ))}
         </div>
+
+
 
       )}
 
