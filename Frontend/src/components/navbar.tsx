@@ -3,10 +3,16 @@ import { Brain, User, LogOut, Menu, X, LayoutDashboard } from 'lucide-react';
 import { useState } from 'react';
 import { useAuthContext } from '../authContext';
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+
 const Navbar = () => {
     const navigate = useNavigate();
     const { user, isLoading, logout } = useAuthContext();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+    const userData = localStorage.getItem('user');
+    const userInfo = userData ? JSON.parse(userData) : null;
+    const profileImageUrl = userInfo?.profileImage ? `${API_BASE_URL}${userInfo.profileImage}` : null;
 
     if (isLoading) {
         return (
@@ -64,15 +70,29 @@ const Navbar = () => {
                                 </button>
 
                                 {/* User Info */}
-                                <div className="flex items-center space-x-3 px-4 py-2 bg-gray-50 rounded-full border cursor-pointer hover:bg-gray-100 transition-all duration-200"
-                                    onClick={() => { navigate("/profile") }}
-                                >
-                                    <div className="flex items-center justify-center w-8 h-8 bg-emerald-100 rounded-full">
-                                        <User className="h-4 w-4 text-emerald-600" />
-                                    </div>
-                                    <span className="text-sm font-medium text-gray-700">
-                                        {user.name || user.email || 'User'}
-                                    </span>
+                                <div className="relative">
+                                    <button
+                                        className="h-10 w-10 rounded-full overflow-hidden border-2 border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                                        onClick={() => { navigate("/profile") }}
+                                    >
+                                        {profileImageUrl ? (
+                                            <img
+                                                src={profileImageUrl}
+                                                alt="Profile"
+                                                className="h-full w-full object-cover"
+                                                onError={(e) => {
+                                                    e.currentTarget.src = '/default-avatar.png'; // Fallback image
+                                                    console.log('Failed to load profile image');
+                                                }}
+                                            />
+                                        ) : (
+                                            <div className="h-full w-full bg-emerald-100 flex items-center justify-center">
+                                                <span className="text-emerald-700 font-medium">
+                                                    {userInfo?.name?.charAt(0)?.toUpperCase() || 'U'}
+                                                </span>
+                                            </div>
+                                        )}
+                                    </button>
                                 </div>
                                 {
                                     user.role == "ADMIN" ?
