@@ -21,6 +21,24 @@ export const createRequest = async (req, res) => {
   }
 };
 
+// Update the status of a request
+export const updateRequest = async (req, res) => {
+  try {
+    const { id } = req.params; // 👈 comes from /request/:id
+    const { time, status } = req.query;
+
+    const updatedRequest = await RequestModel.findByIdAndUpdate(
+      { _id: mongoose.Types.ObjectId(id) },
+      { time, status },
+      { new: true }
+    );
+
+    res.status(200).json({ success: true, request: updatedRequest });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+};
+
 // ✅ Get requests by user (for “My Requests”)
 export const getUserRequests = async (req, res) => {
   try {
@@ -75,29 +93,22 @@ export const getUserRequests = async (req, res) => {
 // ✅ Get requests by user (for “My Requests”)
 export const getDocterRequests = async (req, res) => {
   try {
-    const userId = new mongoose.Types.ObjectId(req.user._id);
+    const nutritionistId = new mongoose.Types.ObjectId(req.user._id);
 
     const requests = await RequestModel.aggregate([
-      // 1️⃣ Filter only this user's requests
-      { $match: { userId } },
-
-      // 2️⃣ Lookup nutritionist info from the User collection
+      {
+        $match: { nutritionistId: new mongoose.Types.ObjectId(nutritionistId) },
+      },
       {
         $lookup: {
-          from: "users", // collection name in MongoDB (usually lowercase plural)
+          from: "users",
           localField: "userId",
           foreignField: "_id",
           as: "userInfo",
         },
       },
-
-      // 3️⃣ Unwind the array (since lookup returns an array)
       { $unwind: "$userInfo" },
-
-      // 4️⃣ Sort by newest first
       { $sort: { createdAt: -1 } },
-
-      // 5️⃣ Optionally pick only needed fields
       {
         $project: {
           _id: 1,
@@ -106,7 +117,6 @@ export const getDocterRequests = async (req, res) => {
           mode: 1,
           createdAt: 1,
           status: 1,
-          // Nutritionist details
           "userInfo._id": 1,
           "userInfo.name": 1,
           "userInfo.email": 1,
