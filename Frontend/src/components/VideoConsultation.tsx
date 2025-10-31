@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useAuthContext } from '../authContext';
+import MyRequests from "./MyRequests";
 
 import { StreamCall, useStreamVideoClient } from '@stream-io/video-react-sdk';
 import VideoConsultationRoom from './VideoConsultationRoom';
@@ -11,22 +12,28 @@ import EmeraldLoader from '../components/loader';
 
 
 
-export default function VideoConsultation({ onClose, onRequestSent }: { onClose?: () => void; onRequestSent?: () => void }) {
-  const { user } = useAuthContext();
-  // ✅ Check if the user's medical profile is complete
-const isProfileComplete = (user) => {
-  return (
-    user?.medical_conditions &&
-    user?.height &&
-    user?.weight &&
-    user?.age
-  );
-};
+
+ interface VideoConsultationProps {
+  onClose?: () => void;
+  onRequestSent?: (req: any) => void;
+  fetchRequests: () => void;           
+  setActiveTab: (tab: 'video' | 'myRequests') => void;
+}
+
+export default function VideoConsultation({
+  onClose,
+  onRequestSent,
+  fetchRequests,  // <-- add here
+  setActiveTab,   // <-- add here
+}: VideoConsultationProps) {
+
+
+
 
   const client = useStreamVideoClient();
 const [loading, setLoading] = useState(false);
 const baseURL = "http://localhost:5000/api"; // replace with your backend URL
-
+  const { user } = useAuthContext();
   const [call, setCall] = useState<any>(null);
   const [showModal, setShowModal] = useState(false);
   const [joinLink, setJoinLink] = useState('');
@@ -129,16 +136,16 @@ const baseURL = "http://localhost:5000/api"; // replace with your backend URL
     setConsultationMode('Video');
     setRequestModal(true);
   };
-
 const sendRequest = async () => {
-  if (!requestTime || !requestReason)
+  if (!requestTime || !requestReason) {
     return alert("Please fill all fields");
+  }
 
   const token = localStorage.getItem("authToken");
   if (!token) return alert("You must be logged in");
 
   try {
-    const res = await fetch(`${baseURL}/consultation/request`, {
+    const res = await fetch(`${baseURL}/consultation/my-request`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -152,7 +159,7 @@ const sendRequest = async () => {
       }),
     });
 
-    const data = await res.json();
+    const data = await res.json(); // ✅ now inside async function
 
     if (res.ok) {
       alert("Request sent successfully!");
@@ -160,8 +167,8 @@ const sendRequest = async () => {
       setRequestReason("");
       setRequestModal(false);
 
-      // ✅ Trigger parent to refresh MyRequests
-      onRequestSent?.(data.request); // pass the request from backend// <-- this calls handleRequestSent in parent
+      // Trigger parent to refresh MyRequests
+      onRequestSent?.(data.data || data.request);
     } else {
       alert(data.error || "Something went wrong");
     }
@@ -170,6 +177,7 @@ const sendRequest = async () => {
     alert("Request failed");
   }
 };
+
 
 
 
@@ -206,8 +214,12 @@ const sendRequest = async () => {
         )}
         <div className="fixed inset-0 z-40">
           <StreamCall call={call}>
-            <VideoConsultationRoom onClose={handleEnd} />
+            <VideoConsultationRoom onClose={handleEnd}
+             fetchRequests={fetchRequests} 
+  setActiveTab={setActiveTab} 
+  onRequestSent={handleRequestSent}  />
           </StreamCall>
+          
         </div>
       </>
     );
@@ -216,6 +228,9 @@ const sendRequest = async () => {
   return (
     <div className="p-6 bg-white rounded-lg shadow-md space-y-6">
       <h3 className="text-xl font-semibold mb-4">Video Consultation</h3>
+
+
+
 
      {/* Nutritionist Cards */}
 {loading ? (

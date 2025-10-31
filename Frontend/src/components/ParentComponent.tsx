@@ -1,37 +1,32 @@
-// ParentComponent.tsx
-import { useState, useEffect } from "react";
-import VideoConsultation from "./VideoConsultation";
-import MyRequests from "./MyRequests";
+import VideoConsultation from './VideoConsultation';
+import MyRequests from './MyRequests';
+import { useState, useRef } from 'react';
 
-const ParentComponent = () => {
-  const [requests, setRequests] = useState<any[]>([]);
+export default function ParentComponent() {
+  const [activeTab, setActiveTab] = useState<'video' | 'myRequests'>('video');
+  const myRequestsRef = useRef<any>(null);
 
-  const fetchRequests = async () => {
-    const token = localStorage.getItem("authToken");
-    if (!token) return;
-
-    const res = await fetch(`http://localhost:5000/api/consultation/my-requests`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    const data = await res.json();
-    if (res.ok) setRequests(data.requests);
+  const fetchRequests = () => {
+    myRequestsRef.current?.fetchRequests?.();
   };
 
-  useEffect(() => {
+  const handleRequestSent = (request: any) => {
     fetchRequests();
-  }, []);
-
-  const handleRequestSent = (newRequest: any) => {
-    // Add the new request to the existing list immediately
-    setRequests(prev => [newRequest, ...prev]);
   };
 
   return (
     <div>
-      <VideoConsultation onRequestSent={handleRequestSent} />
-      <MyRequests requests={requests} />
+      {activeTab === 'video' && (
+        <VideoConsultation
+          fetchRequests={fetchRequests}       // ✅ pass function
+          setActiveTab={setActiveTab}        // ✅ pass function
+          onRequestSent={handleRequestSent}  // ✅ pass function
+        />
+      )}
+
+      {activeTab === 'myRequests' && (
+        <MyRequests ref={myRequestsRef} />
+      )}
     </div>
   );
-};
-
-export default ParentComponent;
+}

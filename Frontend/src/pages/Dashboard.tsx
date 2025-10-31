@@ -62,6 +62,16 @@ const Dashboard = () => {
       return val !== undefined && val !== null && val !== '';
     });
   }; // ✅ added
+const handleFeatureClick = (featureId: string) => {
+  setSelectedFeature(featureId); // Tab activates
+  if (!isProfileComplete()) {
+    toast.error('Please complete your medical profile first.');
+    return; // Stop feature content from loading
+  }
+  // Feature content will render normally if profile complete
+
+  // else, feature content will render normally
+};
 
 
   const fetchProfile = async () => {
@@ -1013,28 +1023,37 @@ toast.success('Meal plan approved and saved successfully!');
     <div className="min-h-screen bg-gray-50">
       <Navbar />
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex overflow-x-auto space-x-4 pb-4">
-          {features.map((feature) => {
-            const Icon = feature.icon;
-            return (
-              <button
-                key={feature.id}
-                onClick={() => setSelectedFeature(feature.id)}
-                className={`flex items-center space-x-2 px-4 py-2 rounded-lg whitespace-nowrap transition-colors ${selectedFeature === feature.id
-                  ? 'bg-emerald-600 text-white'
-                  : 'bg-white text-gray-700 hover:bg-gray-50'
-                  }`}
-              >
-                <Icon className="h-5 w-5" />
-                <span>{feature.title}</span>
-              </button>
-            );
-          })}
-        </div>
+       <div className="flex overflow-x-auto space-x-4 pb-4">
+  {features.map((feature) => {
+    const Icon = feature.icon;
+    return (
+      <button
+        key={feature.id}
+        onClick={() => handleFeatureClick(feature.id)} // <-- Use the new helper here
+        className={`flex items-center space-x-2 px-4 py-2 rounded-lg whitespace-nowrap transition-colors ${
+          selectedFeature === feature.id
+          
+            ? 'bg-emerald-600 text-white'
+            : 'bg-white text-gray-700 hover:bg-gray-50'
+        }`}
+      >
+        <Icon className="h-5 w-5" />
+        <span>{feature.title}</span>
+      </button>
+    );
+  })}
+</div>
+
 
         <div className="mt-8">
-          {features.find((f) => f.id === selectedFeature)?.component()}
-        </div>
+  {isProfileComplete()
+    ? features.find((f) => f.id === selectedFeature)?.component() // Render normally
+    : <div className="p-6 bg-white rounded-lg shadow-md text-center text-gray-600">
+        No data to display. Please complete your medical profile.
+      </div>
+  }
+</div>
+
       </main>
     </div>
   );

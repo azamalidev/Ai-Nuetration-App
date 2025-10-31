@@ -45,7 +45,8 @@ export const updateRequestStatus = async (req, res) => {
       { status },
       { new: true }
     );
-    res.status(200).json({ success: true, updated });
+    res.status(200).json({ success: true, requests });
+
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
