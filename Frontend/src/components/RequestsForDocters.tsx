@@ -65,6 +65,9 @@ const DocterRequests = () => {
     }
   };
 
+  const [openModal, setOpenModal] = useState(); // "chat" | "video" | null
+  const [selectedRequest, setSelectedRequest] = useState(null);
+
   return (
     <div className="p-6 bg-white rounded-lg shadow-md">
       <h3 className="text-xl font-semibold mb-4 text-emerald-700">
@@ -132,8 +135,8 @@ const DocterRequests = () => {
                           }
                         }}
                         className={`border rounded-md px-2 py-0.5 text-xs transition ${req.status === "Pending"
-                            ? "border-emerald-300 text-gray-700 focus:outline-none focus:ring-1 focus:ring-emerald-400"
-                            : "border-gray-200 text-gray-400 bg-gray-50 cursor-not-allowed"
+                          ? "border-emerald-300 text-gray-700 focus:outline-none focus:ring-1 focus:ring-emerald-400"
+                          : "border-gray-200 text-gray-400 bg-gray-50 cursor-not-allowed"
                           }`}
                       />
                     </div>
@@ -164,10 +167,10 @@ const DocterRequests = () => {
                 <div className="mt-2 flex items-center gap-2 text-[11px] text-gray-500">
                   <span
                     className={`px-2 py-0.5 rounded-full font-medium ${req.status === "Approved"
-                        ? "bg-green-100 text-green-700"
-                        : req.status === "Rejected"
-                          ? "bg-red-100 text-red-700"
-                          : "bg-yellow-100 text-yellow-700"
+                      ? "bg-green-100 text-green-700"
+                      : req.status === "Rejected"
+                        ? "bg-red-100 text-red-700"
+                        : "bg-yellow-100 text-yellow-700"
                       }`}
                   >
                     {req.status || "Pending"}
@@ -195,21 +198,31 @@ const DocterRequests = () => {
                       Reject
                     </button>
                   </>
-                ) : req.status === "Approved" && req.mode === "Chat" ? (
-                  <button
-                    className="px-3 py-1 bg-blue-600 text-white text-xs font-medium rounded-lg cursor-default opacity-90"
-                  >
-                    <MessageCircle size={13} className="inline mr-1" />
-                    Chat
-                  </button>
-                ) : req.status === "Approved" && req.mode === "Video" ? (
-                  <button
-                    className="px-3 py-1 bg-emerald-600 text-white text-xs font-medium rounded-lg cursor-default opacity-90"
-                  >
-                    <Video size={13} className="inline mr-1" />
-                    Video
-                  </button>
-                ) : null}
+                ) :
+                  req.status === "Approved" && req.mode === "Chat" ? (
+                    <button
+                      onClick={() => {
+                        setSelectedRequest(req);
+                        setOpenModal("chat");
+                      }}
+                      className="px-3 py-1 bg-blue-600 text-white text-xs font-medium rounded-lg hover:bg-blue-700 transition"
+                    >
+                      <MessageCircle size={13} className="inline mr-1" />
+                      Chat
+                    </button>
+                  ) : req.status === "Approved" && req.mode === "Video" ? (
+                    <button
+                      onClick={() => {
+                        setSelectedRequest(req);
+                        setOpenModal("video");
+                      }}
+                      className="px-3 py-1 bg-emerald-600 text-white text-xs font-medium rounded-lg hover:bg-emerald-700 transition"
+                    >
+                      <Video size={13} className="inline mr-1" />
+                      Video
+                    </button>
+                  ) : null}
+
               </div>
             </div>
           ))}
@@ -218,6 +231,78 @@ const DocterRequests = () => {
 
 
       )}
+
+
+
+      {/* Chat Modal */}
+      {openModal === "chat" && selectedRequest && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg w-[400px]">
+            <h2 className="text-lg font-semibold text-emerald-700 mb-2">Chat Consultation</h2>
+            <p className="text-sm text-gray-600 mb-4">
+              Chat with <span className="font-medium">{selectedRequest?.userInfo?.name}</span>
+            </p>
+
+            <div className="border rounded-md h-40 p-2 overflow-y-auto mb-4 text-sm text-gray-700">
+              {/* Chat content area */}
+              <p>💬 Chat messages will appear here...</p>
+            </div>
+
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => setOpenModal(null)}
+                className="px-3 py-1 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300"
+              >
+                Close
+              </button>
+              <button className="px-3 py-1 bg-emerald-600 text-white rounded-md hover:bg-emerald-700">
+                Send
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Video Modal */}
+      {openModal === "video" && selectedRequest && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg w-[400px]">
+            <h2 className="text-lg font-semibold text-emerald-700 mb-2">Video Consultation</h2>
+            <p className="text-sm text-gray-600 mb-4">
+              Video call with <span className="font-medium">{selectedRequest?.userInfo?.name}</span>
+            </p>
+
+            {/* Example Video Link */}
+            <div className="mb-4">
+              <p className="text-xs text-gray-500 mb-1">Video Link:</p>
+              <a
+                href={selectedRequest?.videoLink || "#"}
+                target="_blank"
+                rel="noreferrer"
+                className="text-emerald-600 text-sm underline"
+              >
+                {selectedRequest?.videoLink || "https://meet.example.com/session123"}
+              </a>
+            </div>
+
+            {/* Example Timer Display */}
+            <div className="mb-4 text-sm text-gray-700">
+              <p>Status: <span className="font-medium text-emerald-600">Now</span></p>
+              <p>Time Left: <span className="font-medium">15 mins</span></p>
+            </div>
+
+            <div className="flex justify-end">
+              <button
+                onClick={() => setOpenModal(null)}
+                className="px-3 py-1 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
 
     </div>
   );
