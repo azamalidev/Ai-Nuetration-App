@@ -49,6 +49,7 @@ const requestSchema = new mongoose.Schema(
 
     videoCallId: {
       type: String,
+      required: false,
     },
   },
   { timestamps: true }
