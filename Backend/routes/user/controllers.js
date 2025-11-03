@@ -8,6 +8,17 @@ import fs from "fs";
 import path from "path";
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
+// Update consultation status
+import { StreamClient } from "@stream-io/node-sdk";
+import mongoose from "mongoose";
+
+// Initialize Stream client
+const serverClient = new StreamClient(
+  process.env.STREAM_API_KEY,
+  process.env.STREAM_SECRET_KEY
+);
+
+
 const controller = {
   register: async (req, res) => {
     try {
@@ -68,7 +79,7 @@ const controller = {
     }
   },
 
-   getNutratious: async (req, res) => {
+  getNutratious: async (req, res) => {
     const data = await UserService.getNutratious(req.body);
     if (data.message === "success") {
       return httpResponse.SUCCESS(res, data.data);
@@ -174,38 +185,38 @@ const controller = {
       return res.status(500).json({ message: "Failed to send request", error: error.message });
     }
   },
-sendConsultationRequest: async (req, res) => {
-  try {
-    const { nutritionistId, time, reason, mode } = req.body;
+  sendConsultationRequest: async (req, res) => {
+    try {
+      const { nutritionistId, time, reason, mode } = req.body;
 
-    if (!nutritionistId || !time || !reason) {
-      return res.status(400).json({ message: "Fill all fields" });
+      if (!nutritionistId || !time || !reason) {
+        return res.status(400).json({ message: "Fill all fields" });
+      }
+
+      const user = await UserService.getById(req.user._id);
+      if (!user || user.message === "error") {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // Add consultation request to user
+      const updatedUser = await UserService.addConsultationRequest(req.user._id, {
+        nutritionist: nutritionistId,
+        time,
+        reason,
+        mode,
+      });
+
+      if (updatedUser.message === "success") {
+        return res.status(201).json({ message: "Request sent successfully", data: updatedUser.data });
+      } else {
+        return res.status(500).json({ message: "Failed to send request", error: updatedUser.data });
+      }
+
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({ message: "Failed to send request", error: error.message });
     }
-
-    const user = await UserService.getById(req.user._id);
-    if (!user || user.message === "error") {
-      return res.status(404).json({ message: "User not found" });
-    }
-
-    // Add consultation request to user
-    const updatedUser = await UserService.addConsultationRequest(req.user._id, {
-      nutritionist: nutritionistId,
-      time,
-      reason,
-      mode,
-    });
-
-    if (updatedUser.message === "success") {
-      return res.status(201).json({ message: "Request sent successfully", data: updatedUser.data });
-    } else {
-      return res.status(500).json({ message: "Failed to send request", error: updatedUser.data });
-    }
-
-  } catch (error) {
-    console.error(error);
-    return res.status(500).json({ message: "Failed to send request", error: error.message });
-  }
-},
+  },
 
   // Get pending requests for a nutritionist
   getPendingConsultations: async (req, res) => {
@@ -219,21 +230,73 @@ sendConsultationRequest: async (req, res) => {
     }
   },
 
-  // Update consultation status
+
   updateConsultationStatus: async (req, res) => {
     try {
       const { requestId, status } = req.body;
+
+      // 1️⃣ Update consultation
       const updated = await Consultation.findByIdAndUpdate(
         requestId,
         { status },
         { new: true }
       );
-      return res.status(200).json({ message: "Request updated", data: updated });
+
+      if (!updated) {
+        return res.status(404).json({ message: "Consultation not found" });
+      }
+
+      // 2️⃣ Run only when status is Approved
+      if (status === "Approved") {
+        const { mode, nutritionistId, userId } = updated;
+
+        // 🟢 CHAT MODE
+        if (mode === "Chat") {
+          updated.chat = [];
+          await updated.save();
+        }
+
+        // 🎥 VIDEO MODE
+        else if (mode === "Video") {
+          if (!nutritionistId || !userId) {
+            return res.status(400).json({
+              message: "Missing nutritionistId or userId for video call",
+            });
+          }
+
+          // 3️⃣ Create Stream.io call
+          const callId = `call_${updated._id}`;
+          const call = serverClient.video.call("default", callId);
+
+          await call.create({
+            created_by_id: nutritionistId.toString(),
+            members: [
+              { user_id: nutritionistId.toString(), role: "host" },
+              { user_id: userId.toString(), role: "guest" },
+            ],
+          });
+
+          // 4️⃣ Generate video link
+          const videoLink = `https://app.stream-io-video.com/call/default/${callId}`;
+          updated.videoLink = videoLink;
+
+          await updated.save();
+        }
+      }
+
+      return res.status(200).json({
+        message: "Consultation updated successfully",
+        data: updated,
+      });
     } catch (error) {
-      console.error(error);
-      return res.status(500).json({ message: "Failed to update request", error: error.message });
+      console.error("Update consultation error:", error);
+      return res.status(500).json({
+        message: "Failed to update consultation",
+        error: error.message,
+      });
     }
   },
+
 
 
   analyzeFoodImage: async (req, res) => {

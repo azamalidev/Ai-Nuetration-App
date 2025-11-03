@@ -1,6 +1,12 @@
 import RequestModel from "../models/RequestModel.js";
-import UserModel from "../models/user.js";
 import mongoose from "mongoose"
+import { StreamClient } from "@stream-io/node-sdk";
+
+// Stream.io setup
+const serverClient = new StreamClient(
+  process.env.STREAM_API_KEY,
+  process.env.STREAM_SECRET_KEY
+);
 // ✅ Create Request
 export const createRequest = async (req, res) => {
   try {
@@ -21,23 +27,88 @@ export const createRequest = async (req, res) => {
   }
 };
 
-// Update the status of a request
+
+
 export const updateRequest = async (req, res) => {
   try {
-    const { id } = req.params; // 👈 comes from /request/:id
-    const { time, status } = req.query;
+    const { id } = req.params; // /request/:id
+    const { status } = req.query;
 
+    // 1️⃣ Update request
     const updatedRequest = await RequestModel.findByIdAndUpdate(
-      { _id: mongoose.Types.ObjectId(id) },
-      { time, status },
+      id,
+      { status },
       { new: true }
     );
 
+    if (!updatedRequest) {
+      return res.status(404).json({ success: false, message: "Request not found" });
+    }
+
+    // 2️⃣ Run only if status is Approved
+    if (status === "Approved") {
+      const { mode, nutritionistId, userId } = updatedRequest;
+
+      // 🟩 CHAT Mode
+      if (mode === "Chat") {
+        updatedRequest.chat = [
+          {
+            type: "doctor",
+            message: "Hello! Your consultation request has been approved. How can I assist you today?",
+            timestamp: new Date(),
+          },
+        ];
+        await updatedRequest.save();
+      }
+
+      // 🟦 VIDEO Mode
+      else if (mode === "Video") {
+        if (!nutritionistId || !userId) {
+          return res.status(400).json({
+            success: false,
+            message: "Missing nutritionistId or userId for video call",
+          });
+        }
+
+        const nutritionistIdStr = nutritionistId.toString();
+        const userIdStr = userId.toString();
+
+        // 1️⃣ Ensure both users exist on Stream
+        await serverClient.upsertUsers([
+          { id: nutritionistIdStr, role: "host" },
+          { id: userIdStr, role: "guest" },
+        ]);
+
+        // 2️⃣ Create Stream.io call
+        const callId = `call_${updatedRequest._id}`;
+        const call = serverClient.video.call("default", callId);
+
+        await call.create({
+          data: {
+            created_by_id: nutritionistIdStr,
+            members: [
+              { user_id: nutritionistIdStr, role: "host" },
+              { user_id: userIdStr, role: "guest" },
+            ],
+          },
+        });
+
+        // 3️⃣ Generate video link
+        const videoCallId = `${callId}`;
+        updatedRequest.videoCallId = videoCallId;
+        await updatedRequest.save();
+      }
+    }
+
+    // ✅ Final success response
     res.status(200).json({ success: true, request: updatedRequest });
   } catch (err) {
+    console.error("❌ Error updating request:", err);
     res.status(500).json({ success: false, error: err.message });
   }
 };
+
+
 
 // ✅ Get requests by user (for “My Requests”)
 export const getUserRequests = async (req, res) => {

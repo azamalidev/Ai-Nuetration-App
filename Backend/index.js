@@ -1,6 +1,6 @@
 import express from "express";
 import cors from "cors";
-import {} from "dotenv/config";
+import { } from "dotenv/config";
 import loaders from "./loaders/index.js";
 import config from "./config/index.js";
 import userRoute from "./routes/user/index.js";
@@ -19,9 +19,9 @@ async function startServer() {
     })
   );
   app.use("/api/getCallToken", getCallTokenRoute);
-app.use("/uploads", express.static("uploads"));
+  app.use("/uploads", express.static("uploads"));
 
-  app.listen(50001, () => {
+  app.listen(5001, () => {
     console.log("Server running on port 5000");
   });
   // ---- JSON and URL Encoded parsers for NON file-upload routes ----
@@ -31,7 +31,7 @@ app.use("/uploads", express.static("uploads"));
   await loaders.init({ expressApp: app });
 
   // ---- MOUNT ROUTES ----  // Make sure multer is applied **inside your route** that handles file uploads
- 
+
 
   app.use("/api", requestRoutes);
 
