@@ -4,7 +4,8 @@ import {
   getUserRequests,
   updateRequestStatus,
   getDocterRequests,
-  updateRequest
+  updateRequest,
+  updateRequestChat
 } from "../../controllers/requestController.js";
 import authenticate from "../../middlewares/authenticate.js";
 
@@ -15,5 +16,8 @@ router.patch("/consultation/request/:id", authenticate, updateRequest);
 router.get("/consultation/my-requests", authenticate, getUserRequests);
 router.get("/consultation/docter-requests", authenticate, getDocterRequests);
 router.put("/consultation/update-status", authenticate, updateRequestStatus);
+router.patch("/consultation/chat/:id", authenticate, updateRequestChat);
+
+
 
 export default router;

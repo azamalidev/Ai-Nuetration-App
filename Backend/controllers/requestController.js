@@ -108,6 +108,37 @@ export const updateRequest = async (req, res) => {
   }
 };
 
+export const updateRequestChat = async (req, res) => {
+  try {
+    const { id } = req.params;     // request ID
+    const { type, message } = req.body; // from frontend
+
+    if (!message || !type) {
+      return res.status(400).json({ success: false, msg: "Message and type are required" });
+    }
+
+    const updatedRequest = await RequestModel.findByIdAndUpdate(
+      id,
+      {
+        $push: {
+          chat: {
+            type,
+            message,
+            timestamp: new Date()
+          }
+        }
+      },
+      { new: true } // return updated doc
+    );
+
+    res.status(200).json({ success: true, request: updatedRequest });
+  } catch (err) {
+    console.error("❌ Error updating request:", err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+};
+
+
 
 
 // ✅ Get requests by user (for “My Requests”)
@@ -143,6 +174,8 @@ export const getUserRequests = async (req, res) => {
           reason: 1,
           mode: 1,
           createdAt: 1,
+          chat: 1,
+          videoCallId: 1,
           status: 1,
           // Nutritionist details
           "nutritionistInfo._id": 1,
@@ -187,6 +220,8 @@ export const getDocterRequests = async (req, res) => {
           reason: 1,
           mode: 1,
           createdAt: 1,
+          chat: 1,
+          videoCallId: 1,
           status: 1,
           "userInfo._id": 1,
           "userInfo.name": 1,

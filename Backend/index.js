@@ -34,7 +34,6 @@ async function startServer() {
 
 
   app.use("/api", requestRoutes);
-
   app.use("/api", userRoute); // now /api/login, /api/register, /api/mealGen
   app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
   const server = app.listen(config.env.port, () =>
