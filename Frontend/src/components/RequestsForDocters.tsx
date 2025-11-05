@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import dayjs from 'dayjs';
 import { toast } from "react-toastify";
 import { MessageCircle, Video } from 'lucide-react';
+import axios from 'axios';
 
 interface Request {
   _id: string;
@@ -12,15 +13,27 @@ interface Request {
   mode: string;
   status?: string;
   createdAt?: string;
+  chat: ChatMessage[];
 }
+
+type ChatMessage = {
+  type: "doctor" | "patient";
+  message: string;
+  timestamp: string;
+};
+
+
 
 const DocterRequests = () => {
   const [requests, setRequests] = useState<Request[]>([]);
+  const [newMessage, setNewMessage] = useState("");
   const API_BASE_URL = import.meta.env.VITE_API_URL;
 
   useEffect(() => {
     fetchRequests();
   }, []);
+
+
 
   const fetchRequests = async () => {
     const token = localStorage.getItem('authToken');
@@ -66,7 +79,35 @@ const DocterRequests = () => {
   };
 
   const [openModal, setOpenModal] = useState(); // "chat" | "video" | null
-  const [selectedRequest, setSelectedRequest] = useState(null);
+  const [selectedRequest, setSelectedRequest] = useState<Request | null>(null);
+
+
+const handleSendMessage = async () => {
+  if (!newMessage.trim()) return;
+
+  let token = localStorage.getItem("authToken");
+
+  try {
+    await axios.patch(
+      `${API_BASE_URL}/api/consultation/chat/${selectedRequest?._id}`,
+      {
+        type: "doctor",
+        message: newMessage,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`, // ✅ Token added here
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    setNewMessage("");
+    fetchRequests(); // Refresh UI
+  } catch (error) {
+    console.error("Error sending message:", error);
+  }
+};
 
   return (
     <div className="p-6 bg-white rounded-lg shadow-md">
@@ -237,31 +278,64 @@ const DocterRequests = () => {
       {/* Chat Modal */}
       {openModal === "chat" && selectedRequest && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg w-[400px]">
-            <h2 className="text-lg font-semibold text-emerald-700 mb-2">Chat Consultation</h2>
+          <div className="bg-white p-6 rounded-lg shadow-lg w-[400px] flex flex-col">
+            <h2 className="text-lg font-semibold text-emerald-700 mb-2">
+              Chat Consultation
+            </h2>
+
             <p className="text-sm text-gray-600 mb-4">
               Chat with <span className="font-medium">{selectedRequest?.userInfo?.name}</span>
             </p>
 
-            <div className="border rounded-md h-40 p-2 overflow-y-auto mb-4 text-sm text-gray-700">
-              {/* Chat content area */}
-              <p>💬 Chat messages will appear here...</p>
+            {/* CHAT AREA */}
+            <div className="border rounded-md h-52 p-2 overflow-y-auto text-sm text-gray-700 flex flex-col gap-2">
+              {selectedRequest?.chat?.length > 0 ? (
+                selectedRequest.chat.map((msg, index) => (
+                  <div
+                    key={index}
+                    className={`p-2 rounded-md max-w-[80%] ${msg.type === "doctor"
+                      ? "bg-emerald-100 self-end text-right"
+                      : "bg-gray-100 self-start"
+                      }`}
+                  >
+                    <p>{msg.message}</p>
+                    <span className="text-[10px] text-gray-500 block mt-1">
+                      {new Date(msg.timestamp).toLocaleTimeString()}
+                    </span>
+                  </div>
+                ))
+              ) : (
+                <p className="text-center text-gray-400">No messages yet...</p>
+              )}
             </div>
 
-            <div className="flex justify-end gap-2">
+            {/* INPUT */}
+            <div className="mt-4 flex gap-2">
+              <input
+                type="text"
+                value={newMessage}
+                onChange={(e) => setNewMessage(e.target.value)}
+                placeholder="Type message..."
+                className="border rounded-md px-2 py-1 w-full text-sm"
+              />
               <button
-                onClick={() => setOpenModal(null)}
-                className="px-3 py-1 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300"
+                onClick={handleSendMessage}
+                className="px-3 py-1 bg-emerald-600 text-white rounded-md hover:bg-emerald-700"
               >
-                Close
-              </button>
-              <button className="px-3 py-1 bg-emerald-600 text-white rounded-md hover:bg-emerald-700">
                 Send
               </button>
             </div>
+
+            <button
+              onClick={() => setOpenModal(null)}
+              className="mt-3 px-3 py-1 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300"
+            >
+              Close
+            </button>
           </div>
         </div>
       )}
+
 
       {/* Video Modal */}
       {openModal === "video" && selectedRequest && (
