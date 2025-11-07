@@ -94,3 +94,14 @@ body.modal-open {
     width: 100%;
   }
 }
+
+/* Hide scrollbar but keep scroll */
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+
+.scrollbar-none {
+  -ms-overflow-style: none; /* IE/Edge */
+  scrollbar-width: none; /* Firefox */
+}
+

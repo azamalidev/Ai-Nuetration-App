@@ -63,47 +63,71 @@ export const updateRequest = async (req, res) => {
 
       // 🟦 VIDEO Mode
       else if (mode === "Video") {
-        if (!nutritionistId || !userId) {
-          return res.status(400).json({
-            success: false,
-            message: "Missing nutritionistId or userId for video call",
-          });
-        }
-
         const nutritionistIdStr = nutritionistId.toString();
         const userIdStr = userId.toString();
 
-        // 1️⃣ Ensure both users exist on Stream
-        await serverClient.upsertUsers([
-          { id: nutritionistIdStr, role: "host" },
-          { id: userIdStr, role: "guest" },
-        ]);
-
-        // 2️⃣ Create Stream.io call
         const callId = `call_${updatedRequest._id}`;
         const call = serverClient.video.call("default", callId);
 
+        // Create Public Call
         await call.create({
           data: {
             created_by_id: nutritionistIdStr,
-            members: [
-              { user_id: nutritionistIdStr, role: "host" },
-              { user_id: userIdStr, role: "guest" },
-            ],
+            access: "public",
           },
         });
 
-        // 3️⃣ Generate video link
-        const videoCallId = `${callId}`;
-        updatedRequest.videoCallId = videoCallId;
+        await call.update({
+          settings_override: {
+            membership: { enabled: false },
+          },
+        });
+
+        // Save call id
+        updatedRequest.videoCallId = callId;
         await updatedRequest.save();
+
+        const expiresIn = Math.floor(Date.now() / 1000) + 60 * 60; // 1 hour
+        const nutritionistToken = serverClient.createToken(nutritionistIdStr, expiresIn);
+        const userToken = serverClient.createToken(userIdStr, expiresIn);
+
+
+        return res.status(200).json({
+          success: true,
+          request: updatedRequest,
+          stream: {
+            callId,
+            nutritionist: { userId: nutritionistIdStr, token: nutritionistToken },
+            patient: { userId: userIdStr, token: userToken },
+          },
+        });
       }
+
     }
 
     // ✅ Final success response
     res.status(200).json({ success: true, request: updatedRequest });
   } catch (err) {
     console.error("❌ Error updating request:", err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+};
+
+export const getStreamToken = async (req, res) => {
+  try {
+    const { userId, callId } = req.query;
+
+    if (!userId || !callId) {
+      return res.status(400).json({ success: false, message: "User and Call ID required" });
+    }
+
+    const expiresIn = Math.floor(Date.now() / 1000) + 60 * 60; // 1 hour
+    const token = serverClient.createToken(userId, expiresIn);
+
+
+    res.status(200).json({ success: true, token });
+  } catch (err) {
+    console.error(err);
     res.status(500).json({ success: false, error: err.message });
   }
 };

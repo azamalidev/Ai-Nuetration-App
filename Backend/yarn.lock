@@ -36,10 +36,10 @@
   resolved "https://registry.npmjs.org/@sideway/pinpoint/-/pinpoint-2.0.0.tgz"
   integrity sha512-RNiOoTPkptFtSVzQevY/yWtZwf/RxyVnPy/OcA9HBM3MlGDnBEYL5B41H0MTn0Uec8Hi+2qUtTfG2WWZBmMejQ==
 
-"@stream-io/node-sdk@^0.5.1":
-  version "0.5.1"
-  resolved "https://registry.npmjs.org/@stream-io/node-sdk/-/node-sdk-0.5.1.tgz"
-  integrity sha512-qSEXWkpfmEa2bP+XQR1T0LNxyzoymWGDjrB7WXH76ZXR9HPHma/l9R3GvGIM75cALi+KS61vPitsiNYJtyqNmQ==
+"@stream-io/node-sdk@^0.7.17":
+  version "0.7.17"
+  resolved "https://registry.npmjs.org/@stream-io/node-sdk/-/node-sdk-0.7.17.tgz"
+  integrity sha512-mvMAqpiIqM0L5cm5xEfzQbWFcsvz0LOFNYr0xduQECa2hP3jcdzEBYWWPHZEGP68SJq0Gw0uYfdLPFm0Mae7cQ==
   dependencies:
     "@types/jsonwebtoken" "^9.0.3"
     "@types/node" "^18.3.0"
@@ -1061,9 +1061,9 @@ semver@^5.6.0, semver@^5.7.1:
   integrity sha512-sauaDf/PZdVgrLTNYHRtpXa1iRiKcaebiKQ1BJdpQlWH2lCvexQdX55snPFyK7QzpudqbCI0qXFfOasHdyNDGQ==
 
 semver@^7.5.4:
-  version "7.7.2"
-  resolved "https://registry.npmjs.org/semver/-/semver-7.7.2.tgz"
-  integrity sha512-RF0Fw+rO5AMf9MAyaRXI4AV0Ulj5lMHqVxxdSgiVbixSCXoEmmX/jk0CuJw4+3SqroYO9VoUh+HcuJivvtJemA==
+  version "7.7.3"
+  resolved "https://registry.npmjs.org/semver/-/semver-7.7.3.tgz"
+  integrity sha512-SdsKMrI9TdgjdweUSR9MweHA4EJ8YxHn8DFaDisvhVlUOe4BF1tLD7GAj0lIqWVl+dPb/rExr0Btby5loQm20Q==
 
 semver@~7.0.0:
   version "7.0.0"

@@ -4,6 +4,8 @@ import dayjs from 'dayjs';
 import { toast } from "react-toastify";
 import { MessageCircle, Video } from 'lucide-react';
 import axios from 'axios';
+import { useStreamVideoClient } from '@stream-io/video-react-sdk';
+import { useNavigate } from "react-router-dom";
 
 interface Request {
   _id: string;
@@ -28,7 +30,7 @@ const DocterRequests = () => {
   const [requests, setRequests] = useState<Request[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const API_BASE_URL = import.meta.env.VITE_API_URL;
-
+  const navigate = useNavigate();
   useEffect(() => {
     fetchRequests();
   }, []);
@@ -82,32 +84,59 @@ const DocterRequests = () => {
   const [selectedRequest, setSelectedRequest] = useState<Request | null>(null);
 
 
-const handleSendMessage = async () => {
-  if (!newMessage.trim()) return;
+  const handleSendMessage = async () => {
+    if (!newMessage.trim()) return;
 
-  let token = localStorage.getItem("authToken");
+    let token = localStorage.getItem("authToken");
 
-  try {
-    await axios.patch(
-      `${API_BASE_URL}/api/consultation/chat/${selectedRequest?._id}`,
-      {
-        type: "doctor",
-        message: newMessage,
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${token}`, // ✅ Token added here
-          "Content-Type": "application/json",
+    try {
+      await axios.patch(
+        `${API_BASE_URL}/api/consultation/chat/${selectedRequest?._id}`,
+        {
+          type: "doctor",
+          message: newMessage,
         },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`, // ✅ Token added here
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      setNewMessage("");
+      fetchRequests(); // Refresh UI
+    } catch (error) {
+      console.error("Error sending message:", error);
+    }
+  };
+
+  const client = useStreamVideoClient();
+  const startConsultation = async (callId: string) => {
+    if (!client || !callId) return;
+
+    const user = JSON.parse(localStorage.getItem("user") || "{}");
+    const authToken = localStorage.getItem("authToken");
+
+    const API_BASE_URL = import.meta.env.VITE_API_URL;
+
+    const res = await fetch(
+      `${API_BASE_URL}/api/consultation/getStreamToken?userId=${user._id}&callId=${callId}`,
+      {
+        headers: { Authorization: `Bearer ${authToken}` },
       }
     );
 
-    setNewMessage("");
-    fetchRequests(); // Refresh UI
-  } catch (error) {
-    console.error("Error sending message:", error);
-  }
-};
+    const { token } = await res.json();
+
+    // ✅ Save token for CallPage
+    localStorage.setItem("streamToken", token);
+
+    // ✅ Navigate to meeting page
+    window.location.href = `/call/${callId}`;
+  };
+
+
 
   return (
     <div className="p-6 bg-white rounded-lg shadow-md">
@@ -347,17 +376,11 @@ const handleSendMessage = async () => {
             </p>
 
             {/* Example Video Link */}
-            <div className="mb-4">
-              <p className="text-xs text-gray-500 mb-1">Video Link:</p>
-              <a
-                href={selectedRequest?.videoLink || "#"}
-                target="_blank"
-                rel="noreferrer"
-                className="text-emerald-600 text-sm underline"
-              >
-                {selectedRequest?.videoLink || "https://meet.example.com/session123"}
-              </a>
-            </div>
+
+            <button onClick={() => startConsultation(selectedRequest?.videoCallId)}>
+              Join Call
+            </button>
+           
 
             {/* Example Timer Display */}
             <div className="mb-4 text-sm text-gray-700">

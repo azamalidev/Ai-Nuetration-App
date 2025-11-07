@@ -14,7 +14,7 @@
   "license": "MIT",
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
-    "@stream-io/node-sdk": "^0.5.1",
+    "@stream-io/node-sdk": "^0.7.17",
     "axios": "^0.24.0",
     "body-parser": "^1.19.0",
     "cloudinary": "^2.8.0",

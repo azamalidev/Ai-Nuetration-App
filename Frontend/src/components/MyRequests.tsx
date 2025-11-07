@@ -1,8 +1,7 @@
 'use client';
 
 import axios from 'axios';
-import { useEffect, useState } from 'react';
-
+import { useEffect, useState, useRef } from 'react';
 interface Request {
   _id: string;
   nutritionistInfo?: {
@@ -27,7 +26,13 @@ const MyRequests = () => {
   const [selectedRequest, setSelectedRequest] = useState<Request | null>(null);
   const [openModal, setOpenModal] = useState<"none" | "details" | "chat" | "video">("none");
   const [newMessage, setNewMessage] = useState("");
+  const chatRef = useRef(null);
 
+  useEffect(() => {
+    if (chatRef.current) {
+      chatRef.current.scrollTop = chatRef.current.scrollHeight;
+    }
+  }, [selectedRequest?.chat]);
   const API_BASE_URL = import.meta.env.VITE_API_URL;
 
   useEffect(() => {
@@ -127,10 +132,10 @@ const MyRequests = () => {
               <p className="text-sm mt-1">
                 <strong>Status:</strong>{" "}
                 <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${req.status === "Approved"
-                    ? "bg-green-100 text-green-700"
-                    : req.status === "Rejected"
-                      ? "bg-red-100 text-red-700"
-                      : "bg-yellow-100 text-yellow-700"
+                  ? "bg-green-100 text-green-700"
+                  : req.status === "Rejected"
+                    ? "bg-red-100 text-red-700"
+                    : "bg-yellow-100 text-yellow-700"
                   }`}>
                   {req.status}
                 </span>
@@ -171,32 +176,58 @@ const MyRequests = () => {
       {/* --- CHAT MODAL --- */}
       {openModal === "chat" && selectedRequest && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-          <div className="bg-white p-6 rounded-lg w-full max-w-md">
-            <h2 className="text-lg font-semibold text-emerald-700 mb-4">Chat with Nutritionist</h2>
+          <div className="bg-white p-6 rounded-lg w-full max-w-4xl h-[85vh] flex flex-col">
+            <h2 className="text-2xl font-semibold text-emerald-700 mb-4">
+              Chat with Nutritionist
+            </h2>
 
-            <div className="border rounded-md h-52 p-2 overflow-y-auto flex flex-col gap-2 text-sm">
-              {selectedRequest.chat?.length ? selectedRequest.chat.map((msg, idx) => (
-                <div key={idx} className={`p-2 rounded-md max-w-[75%] ${msg.type === "patient" ? "bg-emerald-100 self-end" : "bg-gray-100 self-start"
-                  }`}>
-                  {msg.message}
-                </div>
-              )) : <p className="text-center text-gray-400">No messages yet...</p>}
+            {/* Chat Section */}
+            <div
+              ref={chatRef}
+               className="flex-1 border rounded-md p-3 overflow-y-auto scrollbar-none flex flex-col gap-2 text-sm"
+            >
+              {selectedRequest.chat?.length ? (
+                selectedRequest.chat.map((msg, idx) => (
+                  <div
+                    key={idx}
+                    className={`p-2 rounded-md max-w-[60%] ${msg.type === "patient" ? "bg-emerald-100 self-end" : "bg-gray-100 self-start"
+                      }`}
+                  >
+                    {msg.message}
+                  </div>
+                ))
+              ) : (
+                <p className="text-center text-gray-400">No messages yet...</p>
+              )}
             </div>
 
-            <div className="mt-4 flex gap-2">
+
+            {/* Input Box */}
+            <div className="mt-4 flex gap-3">
               <input
                 value={newMessage}
                 onChange={(e) => setNewMessage(e.target.value)}
-                className="flex-1 border p-2 rounded"
+                className="flex-1 border p-3 rounded"
                 placeholder="Type message..."
               />
-              <button onClick={handleSendMessage} className="px-4 py-1 bg-emerald-600 text-white rounded hover:bg-emerald-700">Send</button>
+              <button
+                onClick={handleSendMessage}
+                className="px-6 py-2 bg-emerald-600 text-white rounded hover:bg-emerald-700"
+              >
+                Send
+              </button>
             </div>
 
-            <button onClick={() => setOpenModal("details")} className="mt-3 text-sm text-gray-500 underline">Back</button>
+            <button
+              onClick={() => setOpenModal("details")}
+              className="mt-4 text-sm text-gray-500 underline self-start"
+            >
+              Back
+            </button>
           </div>
         </div>
       )}
+
 
       {/* --- VIDEO MODAL --- */}
       {openModal === "video" && (

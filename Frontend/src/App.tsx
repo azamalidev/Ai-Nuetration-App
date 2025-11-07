@@ -17,6 +17,7 @@ import Auth from "./pages/Auth";
 import Admin from "./pages/Admin";
 import Dash from "./AdminPanel/pages/Dashboard";
 import StreamVideoProvider from "./providers/StreamProvider";
+import CallPage from './pages/CallPage';
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || "http://localhost:5000",
@@ -53,7 +54,7 @@ function App() {
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<Auth />} />
         <Route path="/register" element={<Auth />} />
-
+        <Route path="/call/:callId" element={<CallPage />} />
         {/* ---------- PROTECTED ROUTES ---------- */}
         <Route
           path="/profile"
