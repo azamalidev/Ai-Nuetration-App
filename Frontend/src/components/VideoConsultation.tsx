@@ -304,7 +304,7 @@ export default function VideoConsultation({
       {/* Request Modal */}
       {requestModal && selectedNutritionist && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-<div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-6 relative overflow-y-auto max-h-[90vh] scrollbar-hide transition-all">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-6 relative overflow-y-auto max-h-[90vh] scrollbar-hide transition-all">
             {/* Close Button */}
             <button
               className="absolute top-3 right-3 text-gray-500 hover:text-emerald-700 transition"
@@ -378,16 +378,15 @@ export default function VideoConsultation({
               </div>
 
               {/* Conditionally Show Preferred Time */}
+
+
               {consultationMode === "Video" && (
-                <div
-                  className="animate-fadeIn"
-                  style={{ animation: "fadeIn 0.2s ease-in-out" }}
-                >
+                <div className="animate-fadeIn" style={{ animation: "fadeIn 0.2s ease-in-out" }}>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Preferred Time <span className="text-red-500">*</span>
+                    Preferred Date & Time <span className="text-red-500">*</span>
                   </label>
                   <input
-                    type="time"
+                    type="datetime-local"
                     required={consultationMode === "Video"}
                     value={requestTime}
                     onChange={(e) => setRequestTime(e.target.value)}
@@ -395,6 +394,7 @@ export default function VideoConsultation({
                   />
                 </div>
               )}
+
 
               {/* Reason for Consultation */}
               <div>

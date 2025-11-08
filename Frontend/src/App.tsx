@@ -45,59 +45,57 @@ function PrivateRoute({ children }: { children: React.ReactNode }) {
 
   return isAuthenticated ? <>{children}</> : <Navigate to="/login" replace />;
 }
-
 function App() {
   return (
-    
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-50">
       <Routes>
-        {/* ---------- PUBLIC ROUTES ---------- */}
+        {/* ---------- PUBLIC ROUTES (No Stream Provider) ---------- */}
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<Auth />} />
         <Route path="/register" element={<Auth />} />
-        <Route path="/call/:callId" element={<CallPage />} />
-        {/* ---------- PROTECTED ROUTES ---------- */}
-        <Route
-          path="/profile"
-          element={
-            <PrivateRoute>
-              <HealthProfile />
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="/admin"
-          element={
-            <PrivateRoute>
-              <Admin />
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="/admindashboard"
-          element={
-            <PrivateRoute>
-              <Dash />
-            </PrivateRoute>
-          }
-        />
+
+        {/* ---------- PROTECTED + STREAM ROUTES ---------- */}
         <Route
           path="/dashboard"
           element={
-            <PrivateRoute>
-              <StreamVideoProvider>
-                <Dashboard />
-              </StreamVideoProvider>
-            </PrivateRoute>
+
+            <StreamVideoProvider>
+              <Dashboard />
+            </StreamVideoProvider>
+
           }
-        />
+        >
+
+
+        </Route>
+
+        <Route
+          path="/call/:callId"
+          element={
+
+            <StreamVideoProvider>
+              <CallPage />
+            </StreamVideoProvider>
+
+          }
+        >
+
+
+        </Route>
+
+
+        <Route path="/profile" element={<HealthProfile />} />
+        <Route path="/admin" element={<Admin />} />
+        <Route path="/admindashboard" element={<Dash />} />
 
         {/* ---------- FALLBACK ---------- */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+
       <ToastContainer position="top-right" autoClose={3000} theme="colored" />
     </div>
   );
 }
 
 export default App;
+

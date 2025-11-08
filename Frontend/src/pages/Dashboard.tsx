@@ -31,7 +31,6 @@ const Dashboard = () => {
   const [analysisError, setAnalysisError] = useState<string | null>(null);
   let userData = localStorage.getItem('user');
   const userInfo = userData ? JSON.parse(userData) : null;
-
   const [selectedFeature, setSelectedFeature] = useState(userInfo?.role == "NUTRITIONIST" ? 'consultation-requests' : 'meal-planning');
   const [mealPlan, setMealPlan] = useState<MealPlan | null>(null);
   const [recipes, setRecipes] = useState<RecipeRecommendation[]>([]);

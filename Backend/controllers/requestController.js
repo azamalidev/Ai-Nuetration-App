@@ -67,7 +67,7 @@ export const updateRequest = async (req, res) => {
         const userIdStr = userId.toString();
 
         const callId = `call_${updatedRequest._id}`;
-        
+
 
         // Save call id
         updatedRequest.videoCallId = callId;
@@ -101,16 +101,16 @@ export const updateRequest = async (req, res) => {
 
 export const getStreamToken = async (req, res) => {
   try {
-    const userId = String(req.user._id); 
+    const userId = String(req.user._id);
     const callId = req.query.callId;
 
     if (!callId) return res.status(400).json({ success: false, message: "Call ID required" });
 
     const token = serverClient.video.createCallToken({
-      call: callId,
+      call: { type: "default", id: callId },
       user: { id: userId },
-      type: "participant",
-      exp: Math.floor(Date.now() / 1000) + 3600, // 1 hour
+      role: "user",
+      exp: Math.floor(Date.now() / 1000) + 3600,
     });
 
     res.status(200).json({ success: true, token });

@@ -17,63 +17,67 @@ export default function CallPage() {
   const [token, setToken] = useState<string | null>(null);
   const [call, setCall] = useState<any>(null);
 
-useEffect(() => {
-  if (!callId || !user?._id) {
-    console.error("Missing callId or user._id. Cannot fetch token.");
-    return;
-  }
-
-  const fetchStreamToken = async () => {
-    try {
-      const authToken = localStorage.getItem("authToken"); // ✅ get auth token
-
-      if (!authToken) {
-        console.error("No auth token found in localStorage.");
-        return;
-      }
-
-      const res = await fetch(`/api/stream/token?callId=${callId}`, {
-        headers: {
-          Authorization: `Bearer ${authToken}`, // ✅ send it
-          "Content-Type": "application/json",
-        },
-      });
-
-      if (!res.ok) {
-        console.error("Failed to get Stream token, status:", res.status);
-        return;
-      }
-
-      const data = await res.json();
-      console.log("Stream token response:", data);
-
-      if (!data.token) {
-        console.error("No token returned from backend", data);
-        return;
-      }
-
-      setToken(data.token);
-    } catch (err) {
-      console.error("Failed to fetch Stream token:", err);
+  useEffect(() => {
+    if (!callId || !user?._id) {
+      console.error("Missing callId or user._id. Cannot fetch token.");
+      return;
     }
-  };
 
-  fetchStreamToken();
-}, [callId, user]);
+    const fetchStreamToken = async () => {
+      try {
+        const authToken = localStorage.getItem("authToken"); // ✅ get auth token
 
+        if (!authToken) {
+          console.error("No auth token found in localStorage.");
+          return;
+        }
+
+        const res = await fetch(`/api/stream/token?callId=${callId}`, {
+          headers: {
+            Authorization: `Bearer ${authToken}`, // ✅ send it
+            "Content-Type": "application/json",
+          },
+        });
+
+        if (!res.ok) {
+          console.error("Failed to get Stream token, status:", res.status);
+          return;
+        }
+
+        const data = await res.json();
+        console.log("Stream token response:", data);
+
+        if (!data.token) {
+          console.error("No token returned from backend", data);
+          return;
+        }
+
+        setToken(data.token);
+      } catch (err) {
+        console.error("Failed to fetch Stream token:", err);
+      }
+    };
+
+    fetchStreamToken();
+  }, [callId, user]);
 
   useEffect(() => {
+
+    console.log("Setting up call with token:", token, 'jkjkjkj', client, "and callId:", callId);
     if (!token || !client || !callId) return;
 
     const newCall = client.call("default", callId);
     setCall(newCall);
 
-    newCall.join({ token }).catch(console.error);
+    newCall.getOrCreate()
+      .then(() => newCall.join({ token }))
+      .catch(console.error);
 
     return () => {
       newCall.leave().catch(console.error);
     };
   }, [token, client, callId]);
+
 
   if (!client || !callId || !token || !call) {
     return <p>Loading call...</p>;

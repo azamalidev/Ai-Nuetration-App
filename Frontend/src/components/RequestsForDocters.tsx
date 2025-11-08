@@ -112,44 +112,83 @@ const DocterRequests = () => {
   };
 
   const client = useStreamVideoClient();
-const startConsultation = async (callId: string | undefined) => {
-  if (!client) return; // Stream client not ready
+  const startConsultation = async (callId: string | undefined) => {
+    if (!client) return; // Stream client not ready
 
-  if (!callId) {
-    toast.error("Call ID not available. Please try again later.");
-    return;
-  }
-
-  const user = JSON.parse(localStorage.getItem("user") || "{}");
-  const authToken = localStorage.getItem("authToken"); // ✅ get token
-
-  try {
-    const res = await fetch(`${API_BASE_URL}/api/stream/token?callId=${callId}`, {
-      headers: {
-        "x-user-id": user._id,
-        "Authorization": `Bearer ${authToken}`, // ✅ send token
-        "Content-Type": "application/json",
-      },
-    });
-
-    const data = await res.json();
-
-    if (!data.token) {
-      toast.error("Failed to get Stream token.");
+    if (!callId) {
+      toast.error("Call ID not available. Please try again later.");
       return;
     }
 
-    localStorage.setItem("streamToken", data.token);
+    const user = JSON.parse(localStorage.getItem("user") || "{}");
+    const authToken = localStorage.getItem("authToken"); // ✅ get token
 
-    navigate(`/call/${callId}`);
-  } catch (err) {
-    console.error("Error starting consultation:", err);
-    toast.error("Something went wrong while starting the call.");
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/stream/token?callId=${callId}`, {
+        headers: {
+          "x-user-id": user._id,
+          "Authorization": `Bearer ${authToken}`, // ✅ send token
+          "Content-Type": "application/json",
+        },
+      });
+
+      const data = await res.json();
+
+      if (!data.token) {
+        toast.error("Failed to get Stream token.");
+        return;
+      }
+
+      localStorage.setItem("streamToken", data.token);
+
+      navigate(`/call/${callId}`);
+    } catch (err) {
+      console.error("Error starting consultation:", err);
+      toast.error("Something went wrong while starting the call.");
+    }
+  };
+
+  const [timeLeft, setTimeLeft] = useState("");
+
+  useEffect(() => {
+    if (!selectedRequest?.time) return;
+
+    const timer = setInterval(() => {
+      const now = new Date();
+      const callTime = new Date(selectedRequest.time);
+      const diff = callTime.getTime() - now.getTime();
+
+      if (diff <= 0) {
+        setTimeLeft("Starting now");
+        clearInterval(timer);
+        return;
+      }
+
+      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
+      const minutes = Math.floor((diff / (1000 * 60)) % 60);
+      const seconds = Math.floor((diff / 1000) % 60);
+
+      let formatted = "";
+      if (days > 0) formatted += `${days}d `;
+      if (hours > 0 || days > 0) formatted += `${hours}h `;
+      if (minutes > 0 || hours > 0) formatted += `${minutes}m `;
+      formatted += `${seconds}s`;
+
+      setTimeLeft(formatted.trim());
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [selectedRequest]);
+
+
+  function getTimeFromISO(isoString: string) {
+    if (!isoString) return "";
+    const date = new Date(isoString);
+    const hours = date.getHours().toString().padStart(2, "0");
+    const minutes = date.getMinutes().toString().padStart(2, "0");
+    return `${hours}:${minutes}`;
   }
-};
-
-
-
 
   return (
     <div className="p-6 bg-white rounded-lg shadow-md">
@@ -185,14 +224,12 @@ const startConsultation = async (callId: string | undefined) => {
                     <div className="flex items-center gap-1">
                       <input
                         type="time"
-                        value={req.time}
-                        disabled={req.status !== "Pending"} // ⛔ Disable if not pending
+                        value={getTimeFromISO(req.time)}  // convert ISO to HH:MM
+                        disabled={req.status !== "Pending"}
                         onChange={(e) => {
                           const newTime = e.target.value;
                           setRequests((prev) =>
-                            prev.map((r, i) =>
-                              i === index ? { ...r, time: newTime } : r
-                            )
+                            prev.map((r, i) => (i === index ? { ...r, time: newTime } : r))
                           );
                         }}
                         onBlur={async (e) => {
@@ -218,10 +255,11 @@ const startConsultation = async (callId: string | undefined) => {
                           }
                         }}
                         className={`border rounded-md px-2 py-0.5 text-xs transition ${req.status === "Pending"
-                          ? "border-emerald-300 text-gray-700 focus:outline-none focus:ring-1 focus:ring-emerald-400"
-                          : "border-gray-200 text-gray-400 bg-gray-50 cursor-not-allowed"
+                            ? "border-emerald-300 text-gray-700 focus:outline-none focus:ring-1 focus:ring-emerald-400"
+                            : "border-gray-200 text-gray-400 bg-gray-50 cursor-not-allowed"
                           }`}
                       />
+
                     </div>
                   )}
 
@@ -381,30 +419,52 @@ const startConsultation = async (callId: string | undefined) => {
 
       {/* Video Modal */}
       {openModal === "video" && selectedRequest && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg w-[400px]">
-            <h2 className="text-lg font-semibold text-emerald-700 mb-2">Video Consultation</h2>
+        <div className="fixed inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm z-50">
+          <div className="bg-white p-6 rounded-xl shadow-xl w-[420px] animate-fadeIn">
+            <h2 className="text-xl font-semibold text-emerald-700 mb-1">
+              Video Consultation
+            </h2>
+
             <p className="text-sm text-gray-600 mb-4">
-              Video call with <span className="font-medium">{selectedRequest?.userInfo?.name}</span>
+              Video call with{" "}
+              <span className="font-medium">
+                {selectedRequest?.userInfo?.name}
+              </span>
             </p>
 
-            {/* Example Video Link */}
-
-            <button onClick={() => startConsultation(selectedRequest?.videoCallId)}>
-              Join Call
-            </button>
-           
-
-            {/* Example Timer Display */}
-            <div className="mb-4 text-sm text-gray-700">
-              <p>Status: <span className="font-medium text-emerald-600">Now</span></p>
-              <p>Time Left: <span className="font-medium">15 mins</span></p>
+            {/* Status Section */}
+            <div className="bg-emerald-50 border border-emerald-200 p-3 rounded-lg mb-4">
+              <p className="text-sm text-gray-700">
+                Status:{" "}
+                <span className="font-semibold text-emerald-700">
+                  {timeLeft === "Starting now" ? "Starting Now" : "Scheduled"}
+                </span>
+              </p>
+              <p className="text-sm text-gray-700">
+                Starts In:{" "}
+                <span className="font-semibold text-emerald-600">
+                  {timeLeft}
+                </span>
+              </p>
             </div>
 
-            <div className="flex justify-end">
+            {/* Join Button */}
+            <button
+              onClick={() => startConsultation(selectedRequest?.videoCallId)}
+              disabled={timeLeft !== "Starting now"}
+              className={`w-full py-2 rounded-lg text-white font-medium transition
+          ${timeLeft === "Starting now"
+                  ? "bg-emerald-600 hover:bg-emerald-700"
+                  : "bg-gray-300 cursor-not-allowed"
+                }`}
+            >
+              {timeLeft === "Starting now" ? "Join Call" : "Join when time comes"}
+            </button>
+
+            <div className="flex justify-end mt-4">
               <button
                 onClick={() => setOpenModal(null)}
-                className="px-3 py-1 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300"
+                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition"
               >
                 Close
               </button>
@@ -412,6 +472,7 @@ const startConsultation = async (callId: string | undefined) => {
           </div>
         </div>
       )}
+
 
 
     </div>
