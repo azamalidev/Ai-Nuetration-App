@@ -48,6 +48,7 @@ function PrivateRoute({ children }: { children: React.ReactNode }) {
 
 function App() {
   return (
+    
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-50">
       <Routes>
         {/* ---------- PUBLIC ROUTES ---------- */}

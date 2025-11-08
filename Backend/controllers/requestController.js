@@ -67,21 +67,7 @@ export const updateRequest = async (req, res) => {
         const userIdStr = userId.toString();
 
         const callId = `call_${updatedRequest._id}`;
-        const call = serverClient.video.call("default", callId);
-
-        // Create Public Call
-        await call.create({
-          data: {
-            created_by_id: nutritionistIdStr,
-            access: "public",
-          },
-        });
-
-        await call.update({
-          settings_override: {
-            membership: { enabled: false },
-          },
-        });
+        
 
         // Save call id
         updatedRequest.videoCallId = callId;
@@ -115,15 +101,17 @@ export const updateRequest = async (req, res) => {
 
 export const getStreamToken = async (req, res) => {
   try {
-    const { userId, callId } = req.query;
+    const userId = String(req.user._id); 
+    const callId = req.query.callId;
 
-    if (!userId || !callId) {
-      return res.status(400).json({ success: false, message: "User and Call ID required" });
-    }
+    if (!callId) return res.status(400).json({ success: false, message: "Call ID required" });
 
-    const expiresIn = Math.floor(Date.now() / 1000) + 60 * 60; // 1 hour
-    const token = serverClient.createToken(userId, expiresIn);
-
+    const token = serverClient.video.createCallToken({
+      call: callId,
+      user: { id: userId },
+      type: "participant",
+      exp: Math.floor(Date.now() / 1000) + 3600, // 1 hour
+    });
 
     res.status(200).json({ success: true, token });
   } catch (err) {
@@ -131,6 +119,7 @@ export const getStreamToken = async (req, res) => {
     res.status(500).json({ success: false, error: err.message });
   }
 };
+
 
 export const updateRequestChat = async (req, res) => {
   try {

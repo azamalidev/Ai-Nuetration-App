@@ -112,29 +112,42 @@ const DocterRequests = () => {
   };
 
   const client = useStreamVideoClient();
-  const startConsultation = async (callId: string) => {
-    if (!client || !callId) return;
+const startConsultation = async (callId: string | undefined) => {
+  if (!client) return; // Stream client not ready
 
-    const user = JSON.parse(localStorage.getItem("user") || "{}");
-    const authToken = localStorage.getItem("authToken");
+  if (!callId) {
+    toast.error("Call ID not available. Please try again later.");
+    return;
+  }
 
-    const API_BASE_URL = import.meta.env.VITE_API_URL;
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
+  const authToken = localStorage.getItem("authToken"); // ✅ get token
 
-    const res = await fetch(
-      `${API_BASE_URL}/api/consultation/getStreamToken?userId=${user._id}&callId=${callId}`,
-      {
-        headers: { Authorization: `Bearer ${authToken}` },
-      }
-    );
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/stream/token?callId=${callId}`, {
+      headers: {
+        "x-user-id": user._id,
+        "Authorization": `Bearer ${authToken}`, // ✅ send token
+        "Content-Type": "application/json",
+      },
+    });
 
-    const { token } = await res.json();
+    const data = await res.json();
 
-    // ✅ Save token for CallPage
-    localStorage.setItem("streamToken", token);
+    if (!data.token) {
+      toast.error("Failed to get Stream token.");
+      return;
+    }
 
-    // ✅ Navigate to meeting page
-    window.location.href = `/call/${callId}`;
-  };
+    localStorage.setItem("streamToken", data.token);
+
+    navigate(`/call/${callId}`);
+  } catch (err) {
+    console.error("Error starting consultation:", err);
+    toast.error("Something went wrong while starting the call.");
+  }
+};
+
 
 
 
