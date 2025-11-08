@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import dayjs from 'dayjs';
 import { toast } from "react-toastify";
 import { MessageCircle, Video } from 'lucide-react';
+import EmeraldLoader from '../components/loader';
 import axios from 'axios';
 import { useStreamVideoClient } from '@stream-io/video-react-sdk';
 import { useNavigate } from "react-router-dom";

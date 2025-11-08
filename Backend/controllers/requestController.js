@@ -104,6 +104,7 @@ export const getStreamToken = async (req, res) => {
     const userId = String(req.user._id);
     const callId = req.query.callId;
 
+    
     if (!callId) return res.status(400).json({ success: false, message: "Call ID required" });
 
     const token = serverClient.video.createCallToken({

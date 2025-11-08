@@ -330,10 +330,7 @@ const Dashboard = () => {
 
   const generateGroceryList = async () => {
     // ✅ added: require completed profile for grocery generation
-    if (!isProfileComplete()) {
-      toast.error('Please complete your medical profile');
-      return;
-    } // ✅ added
+   
 
     if (!mealPlan) {
       setError('Please generate a meal plan first');

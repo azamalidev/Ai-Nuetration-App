@@ -1,52 +1,50 @@
-'use client';
+"use client";
 import "../index.css";
 
-import { useState, useEffect } from 'react';
-import { useAuthContext } from '../authContext';
+import { useState, useEffect } from "react";
+import { useAuthContext } from "../authContext";
 import MyRequests from "./MyRequests";
 
-import { StreamCall, useStreamVideoClient } from '@stream-io/video-react-sdk';
-import VideoConsultationRoom from './VideoConsultationRoom';
-import { Button } from './ui/button';
-import { Video, Phone, Clipboard, X, Briefcase } from 'lucide-react';
-import EmeraldLoader from '../components/loader';
-import { toast, ToastContainer } from 'react-toastify';
-
-
-
+import { StreamCall, useStreamVideoClient } from "@stream-io/video-react-sdk";
+import VideoConsultationRoom from "./VideoConsultationRoom";
+import { Button } from "./ui/button";
+import { Video, Phone, Clipboard, X, Briefcase } from "lucide-react";
+import EmeraldLoader from "../components/loader";
+import { toast, ToastContainer } from "react-toastify";
 
 interface VideoConsultationProps {
   onClose?: () => void;
   onRequestSent?: (req: any) => void;
   fetchRequests: () => void;
-  setActiveTab: (tab: 'video' | 'myRequests') => void;
+  setActiveTab: (tab: "video" | "myRequests") => void;
 }
 
 export default function VideoConsultation({
   onClose,
   onRequestSent,
-  fetchRequests,  // <-- add here
-  setActiveTab,   // <-- add here
+  fetchRequests, // <-- add here
+  setActiveTab, // <-- add here
 }: any) {
-
-
-
-
+  // Single client declaration at component level
   const client = useStreamVideoClient();
+  const [activeCall, setActiveCall] = useState<any>(null);
   const [loading, setLoading] = useState(false);
-  const API_BASE_URL = import.meta.env.VITE_API_URL// replace with your backend URL
+  const API_BASE_URL = import.meta.env.VITE_API_URL; // replace with your backend URL
   const { user } = useAuthContext();
   const [call, setCall] = useState<any>(null);
   const [showModal, setShowModal] = useState(false);
-  const [joinLink, setJoinLink] = useState('');
+  const [joinLink, setJoinLink] = useState("");
   const [selectedNutritionist, setSelectedNutritionist] = useState<any>(null);
   const [requestModal, setRequestModal] = useState(false);
   const [pendingRequests, setPendingRequests] = useState<any[]>([]);
 
-  const [requestTime, setRequestTime] = useState('');
-  const [requestReason, setRequestReason] = useState('');
-  const [consultationMode, setConsultationMode] = useState('Video'); // AI suggested
-
+  const [requestTime, setRequestTime] = useState("");
+  const [requestReason, setRequestReason] = useState("");
+  const [consultationMode, setConsultationMode] = useState("Video"); // AI suggested
+  const [dateSelected, setDateSelected] = useState(false);
+  const [timeSelected, setTimeSelected] = useState(false);
+  const [selectedDate, setSelectedDate] = useState("");
+  const [selectedTime, setSelectedTime] = useState("");
 
   let [nutritionists, setNutritionists] = useState<any[]>([]);
 
@@ -55,7 +53,7 @@ export default function VideoConsultation({
       try {
         setLoading(true); // start loader
 
-        const token = localStorage.getItem('authToken');
+        const token = localStorage.getItem("authToken");
         if (!token) {
           console.error("You must be logged in to fetch nutritionists.");
           return;
@@ -64,10 +62,9 @@ export default function VideoConsultation({
         const baseUrl = import.meta.env.VITE_API_URL; // ✅ from .env
 
         const res = await fetch(`${baseUrl}/get-docter-list`, {
-          method: 'GET',
+          method: "GET",
           headers: {
-            'Authorization': `Bearer ${token}`,
-
+            Authorization: `Bearer ${token}`,
           },
         });
 
@@ -75,12 +72,11 @@ export default function VideoConsultation({
           const data = await res.json();
           setNutritionists(data?.data || []);
         } else {
-          console.error('Failed to fetch nutritionists');
+          console.error("Failed to fetch nutritionists");
         }
       } catch (error) {
-        console.error('Error fetching nutritionists:', error);
-      }
-      finally {
+        console.error("Error fetching nutritionists:", error);
+      } finally {
         setLoading(false);
       }
     };
@@ -91,15 +87,24 @@ export default function VideoConsultation({
   const startConsultation = async () => {
     if (!client || !user) return;
     try {
-      const newCall = client.call('default', `consultation-${user._id}-${Date.now()}`);
+      const newCall = client.call(
+        "default",
+        `consultation-${user._id}-${Date.now()}`
+      );
       await newCall.getOrCreate({
-        data: { starts_at: new Date().toISOString(), custom: { type: 'nutrition-consultation', title: 'Nutrition Consultation' } },
+        data: {
+          starts_at: new Date().toISOString(),
+          custom: {
+            type: "nutrition-consultation",
+            title: "Nutrition Consultation",
+          },
+        },
       });
       await newCall.join();
       setCall(newCall);
       setShowModal(true);
     } catch (error) {
-      console.error('Error starting consultation:', error);
+      console.error("Error starting consultation:", error);
     }
   };
 
@@ -107,20 +112,22 @@ export default function VideoConsultation({
     if (!client || !joinLink) return;
     let id = joinLink.trim();
     try {
-      const parts = id.split('/');
+      const parts = id.split("/");
       id = parts[parts.length - 1];
-      const callInstance = client.call('default', id);
+      const callInstance = client.call("default", id);
       await callInstance.join();
       setCall(callInstance);
       setShowModal(true);
     } catch (error) {
-      console.error('Error joining consultation:', error);
+      console.error("Error joining consultation:", error);
     }
   };
 
   const handleEnd = async () => {
     if (!call) return;
-    try { await call.leave(); } catch { }
+    try {
+      await call.leave();
+    } catch {}
     setCall(null);
     setShowModal(false);
     onClose?.();
@@ -133,15 +140,20 @@ export default function VideoConsultation({
 
   const openRequestModal = (nutritionist: any) => {
     setSelectedNutritionist(nutritionist);
-    setRequestTime('');
-    setRequestReason('');
-    setConsultationMode('Video');
+    setRequestTime("");
+    setRequestReason("");
+    setConsultationMode("Video");
+    setDateSelected(false);
+    setTimeSelected(false);
+    setSelectedDate("");
+    setSelectedTime("");
     setRequestModal(true);
   };
   const sendRequest = async () => {
     if (!requestReason) {
       return toast.error("Please provide a reason for consultation");
-    } if (consultationMode === "Video" && !requestTime) {
+    }
+    if (consultationMode === "Video" && !requestTime) {
       return toast.error("Please select preferred time for video consultation");
     }
 
@@ -163,37 +175,112 @@ export default function VideoConsultation({
         }),
       });
 
-
       const data = await res.json(); // ✅ now inside async function
-      toast.success('Consultation Request Sent!', { position: 'top-right' });
+      toast.success("Consultation Request Sent!", { position: "top-right" });
       setRequestTime("");
       setRequestReason("");
+      setDateSelected(false);
+      setTimeSelected(false);
+      setSelectedDate("");
+      setSelectedTime("");
       setRequestModal(false);
 
       // Trigger parent to refresh MyRequests
       onRequestSent?.(data.data || data.request);
-
     } catch (err) {
       console.error(err);
-      toast.success(`Error : ${err}`, { position: 'top-right' });
-
+      toast.success(`Error : ${err}`, { position: "top-right" });
     }
   };
 
-
-
-
-
   useEffect(() => {
-    if (user?.role === 'nutritionist') {
+    if (user?.role === "nutritionist") {
       setPendingRequests([
-        { _id: 'r1', userName: 'Mariam Fatima', userId: 'u1', time: '10:00 AM', reason: 'Weight Loss', mode: 'Video' }
+        {
+          _id: "r1",
+          userName: "Mariam Fatima",
+          userId: "u1",
+          time: "10:00 AM",
+          reason: "Weight Loss",
+          mode: "Video",
+        },
       ]);
     }
   }, [user]);
 
-  const approveRequest = async (requestId: string) => { await startConsultation(); setPendingRequests(pendingRequests.filter(r => r._id !== requestId)); };
-  const denyRequest = async (requestId: string) => { setPendingRequests(pendingRequests.filter(r => r._id !== requestId)); };
+  const approveRequest = async (requestId: string) => {
+    await startConsultation();
+    setPendingRequests(pendingRequests.filter((r) => r._id !== requestId));
+  };
+  const denyRequest = async (requestId: string) => {
+    setPendingRequests(pendingRequests.filter((r) => r._id !== requestId));
+  };
+
+  const handleJoinCall = async (request: any) => {
+    try {
+      const callId = `consultation_${request._id}`;
+      const call = client?.call("default", callId);
+
+      if (!call) {
+        throw new Error("Failed to initialize call");
+      }
+
+      // Exact same join call method as nutritionist side
+      await call.join({
+        create: true,
+        camera: true,
+        microphone: true,
+      });
+
+      setActiveCall(call);
+    } catch (error) {
+      console.error("Error joining call:", error);
+      toast.error("Failed to initialize camera and microphone");
+    }
+  };
+
+  // Add this function to handle request clicks
+  const handleRequestClick = async (request: any) => {
+    if (request.mode.toLowerCase() === "chat") {
+      if (request.status.toLowerCase() === "approved") {
+        // Navigate to chat
+        setActiveTab("chat");
+        // Close any open modals
+        setRequestModal(false);
+        setShowModal(false);
+      } else {
+        toast.info("Chat request is pending approval");
+      }
+      return;
+    }
+
+    if (request.mode.toLowerCase() === "video") {
+      if (request.status.toLowerCase() === "approved") {
+        try {
+          const response = await fetch(
+            `${API_BASE_URL}/api/consultation/join-call/${request._id}`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
+              },
+            }
+          );
+
+          const data = await response.json();
+          if (data.success) {
+            setCall(data.call);
+            setShowModal(true);
+          }
+        } catch (error) {
+          toast.error("Failed to join video call");
+        }
+      } else {
+        toast.info("Video request is pending approval");
+      }
+    }
+  };
 
   // ---------------- RENDER ----------------
 
@@ -204,24 +291,42 @@ export default function VideoConsultation({
         {showModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
             <div className="bg-white rounded-lg shadow-lg p-6 max-w-sm w-full relative">
-              <button className="absolute top-2 right-2 text-gray-600 hover:text-gray-900" onClick={() => setShowModal(false)}><X className="h-5 w-5" /></button>
-              <h2 className="text-lg font-semibold mb-4 text-emerald-600">Invite Someone</h2>
-              <input type="text" readOnly value={inviteUrl} className="w-full border rounded px-3 py-2 mb-4" onFocus={e => e.currentTarget.select()} />
+              <button
+                className="absolute top-2 right-2 text-gray-600 hover:text-gray-900"
+                onClick={() => setShowModal(false)}
+              >
+                <X className="h-5 w-5" />
+              </button>
+              <h2 className="text-lg font-semibold mb-4 text-emerald-600">
+                Invite Someone
+              </h2>
+              <input
+                type="text"
+                readOnly
+                value={inviteUrl}
+                className="w-full border rounded px-3 py-2 mb-4"
+                onFocus={(e) => e.currentTarget.select()}
+              />
               <div className="flex justify-end gap-2">
-                <Button onClick={copyInviteLink} variant="outline" size="sm"><Clipboard className="h-4 w-4 mr-1" /> Copy Link</Button>
-                <Button onClick={() => setShowModal(false)} size="sm">Close</Button>
+                <Button onClick={copyInviteLink} variant="outline" size="sm">
+                  <Clipboard className="h-4 w-4 mr-1" /> Copy Link
+                </Button>
+                <Button onClick={() => setShowModal(false)} size="sm">
+                  Close
+                </Button>
               </div>
             </div>
           </div>
         )}
         <div className="fixed inset-0 z-40">
           <StreamCall call={call}>
-            <VideoConsultationRoom onClose={handleEnd}
+            <VideoConsultationRoom
+              onClose={handleEnd}
               fetchRequests={fetchRequests}
               setActiveTab={setActiveTab}
-              onRequestSent={handleRequestSent} />
+              onRequestSent={handleRequestSent}
+            />
           </StreamCall>
-
         </div>
       </>
     );
@@ -241,9 +346,6 @@ export default function VideoConsultation({
         theme="colored"
       />
       <h3 className="text-xl font-semibold mb-4">Video Consultation</h3>
-
-
-
 
       {/* Nutritionist Cards */}
       {loading ? (
@@ -267,13 +369,16 @@ export default function VideoConsultation({
                   />
                 </div>
 
-                <h4 className="text-lg font-semibold text-gray-800 mt-3">{n.name}</h4>
+                <h4 className="text-lg font-semibold text-gray-800 mt-3">
+                  {n.name}
+                </h4>
                 <p className="text-sm text-gray-500">{n.qualifications}</p>
 
                 <div className="flex items-center justify-center gap-2 mt-2 text-xs text-emerald-700 font-medium">
                   <Briefcase size={14} />
                   <span>
-                    {n.yearsOfExperience} {n.yearsOfExperience === 1 ? 'Year' : 'Years'} Experience
+                    {n.yearsOfExperience}{" "}
+                    {n.yearsOfExperience === 1 ? "Year" : "Years"} Experience
                   </span>
                 </div>
 
@@ -299,15 +404,13 @@ export default function VideoConsultation({
         </div>
       )}
 
-
-
       {/* Request Modal */}
       {requestModal && selectedNutritionist && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-6 relative overflow-y-auto max-h-[90vh] scrollbar-hide transition-all">
+        <div className="fixed inset-0 z-50 flex items-center justify-center  p-4">
+          <div className="bg-white rounded-2xl shadow-9xl max-w-lg w-full p-6 relative overflow-y-auto max-h-[90vh] scrollbar-hide transition-all">
             {/* Close Button */}
             <button
-              className="absolute top-3 right-3 text-gray-500 hover:text-emerald-700 transition"
+              className="absolute top-3 right-3 text-red-500 hover:text-emerald-700 transition"
               onClick={() => setRequestModal(false)}
             >
               <X className="h-6 w-6" />
@@ -325,23 +428,31 @@ export default function VideoConsultation({
                   <h2 className="text-xl font-semibold text-emerald-800">
                     {selectedNutritionist.name}
                   </h2>
-                  <p className="text-sm text-gray-600">{selectedNutritionist.qualifications}</p>
+                  <p className="text-sm text-gray-600">
+                    {selectedNutritionist.qualifications}
+                  </p>
                   <p className="text-xs text-gray-500">
                     {selectedNutritionist.yearsOfExperience}{" "}
-                    {selectedNutritionist.yearsOfExperience === 1 ? "Year" : "Years"} Experience
+                    {selectedNutritionist.yearsOfExperience === 1
+                      ? "Year"
+                      : "Years"}{" "}
+                    Experience
                   </p>
                 </div>
               </div>
               <hr className="border-t-4 border-[#059669] my-4 rounded-full" />
 
-
               <div className="grid grid-cols-1 gap-2 text-sm text-gray-700">
                 <p>
-                  <span className="font-semibold text-emerald-700">Specialization:</span>{" "}
+                  <span className="font-semibold text-emerald-700">
+                    Specialization:
+                  </span>{" "}
                   {selectedNutritionist.specialization || "N/A"}
                 </p>
                 <p>
-                  <span className="font-semibold text-emerald-700">Certifications:</span>{" "}
+                  <span className="font-semibold text-emerald-700">
+                    Certifications:
+                  </span>{" "}
                   {selectedNutritionist.certifications?.join(", ") || "None"}
                 </p>
 
@@ -349,7 +460,6 @@ export default function VideoConsultation({
                   <span className="font-semibold text-emerald-700">Email:</span>{" "}
                   {selectedNutritionist.email || "N/A"}
                 </p>
-
               </div>
 
               {selectedNutritionist.bio && (
@@ -379,22 +489,78 @@ export default function VideoConsultation({
 
               {/* Conditionally Show Preferred Time */}
 
-
               {consultationMode === "Video" && (
-                <div className="animate-fadeIn" style={{ animation: "fadeIn 0.2s ease-in-out" }}>
+                <div
+                  className="animate-fadeIn"
+                  style={{ animation: "fadeIn 0.2s ease-in-out" }}
+                >
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Preferred Date & Time <span className="text-red-500">*</span>
+                    Preferred Date & Time{" "}
+                    <span className="text-red-500">*</span>
                   </label>
-                  <input
-                    type="datetime-local"
-                    required={consultationMode === "Video"}
-                    value={requestTime}
-                    onChange={(e) => setRequestTime(e.target.value)}
-                    className="w-full border border-gray-300 focus:border-emerald-400 focus:ring-emerald-300 rounded-lg px-3 py-2 text-sm outline-none transition"
-                  />
+
+                  {!dateSelected && (
+                    <div className="mb-2">
+                      <input
+                        type="date"
+                        value={selectedDate}
+                        onChange={(e) => {
+                          setSelectedDate(e.target.value);
+                          setDateSelected(true);
+                          setRequestTime(
+                            (prev) =>
+                              `${e.target.value}T${prev.split("T")[1] || ""}`
+                          );
+                        }}
+                        className="w-full border border-gray-300 focus:border-emerald-400 focus:ring-emerald-300 rounded-lg px-3 py-2 text-sm outline-none transition"
+                      />
+                    </div>
+                  )}
+
+                  {!timeSelected && (
+                    <div>
+                      <input
+                        type="time"
+                        value={selectedTime}
+                        onChange={(e) => {
+                          setSelectedTime(e.target.value);
+                          setTimeSelected(true);
+                          setRequestTime(
+                            (prev) =>
+                              `${prev.split("T")[0] || selectedDate}T${
+                                e.target.value
+                              }`
+                          );
+                        }}
+                        className="w-full border border-gray-300 focus:border-emerald-400 focus:ring-emerald-300 rounded-lg px-3 py-2 text-sm outline-none transition"
+                      />
+                    </div>
+                  )}
+
+                  {(dateSelected || timeSelected) && (
+                    <div className="mt-2 text-sm text-emerald-600 bg-emerald-50 p-2 rounded-lg">
+                      {dateSelected && (
+                        <div>
+                          Date: {new Date(selectedDate).toLocaleDateString()}
+                        </div>
+                      )}
+                      {timeSelected && <div>Time: {selectedTime}</div>}
+                      <button
+                        onClick={() => {
+                          setDateSelected(false);
+                          setTimeSelected(false);
+                          setSelectedDate("");
+                          setSelectedTime("");
+                          setRequestTime("");
+                        }}
+                        className="text-xs text-red-500 hover:text-red-600 mt-1"
+                      >
+                        Change
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
-
 
               {/* Reason for Consultation */}
               <div>
@@ -409,7 +575,6 @@ export default function VideoConsultation({
                 />
               </div>
             </div>
-
 
             {/* Footer Buttons */}
             <div className="flex justify-end gap-3 mt-6">
@@ -430,12 +595,11 @@ export default function VideoConsultation({
         </div>
       )}
 
-
       {/* Pending Requests */}
-      {user?.role === 'nutritionist' && pendingRequests.length > 0 && (
+      {user?.role === "nutritionist" && pendingRequests.length > 0 && (
         <div className="mt-6">
           <h4 className="font-semibold mb-2">Pending Requests</h4>
-          {pendingRequests.map(req => (
+          {pendingRequests.map((req) => (
             <div key={req._id} className="p-4 bg-white shadow rounded mb-2">
               <p>User: {req.userName}</p>
               <p>Time: {req.time}</p>
@@ -443,13 +607,14 @@ export default function VideoConsultation({
               <p>Mode: {req.mode}</p>
               <div className="flex gap-2 mt-2">
                 <Button onClick={() => approveRequest(req._id)}>Approve</Button>
-                <Button onClick={() => denyRequest(req._id)} variant="outline">Deny</Button>
+                <Button onClick={() => denyRequest(req._id)} variant="outline">
+                  Deny
+                </Button>
               </div>
             </div>
           ))}
         </div>
       )}
-
     </div>
   );
 }
