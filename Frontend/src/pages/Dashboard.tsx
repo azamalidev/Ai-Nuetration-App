@@ -62,13 +62,12 @@ const Dashboard = () => {
       // treat 0 or '0' as valid if needed — here we require truthy values
       return val !== undefined && val !== null && val !== '';
     });
+    
   }; // ✅ added
+  
   const handleFeatureClick = (featureId: string) => {
     setSelectedFeature(featureId); // Tab activates
-    if (!isProfileComplete()) {
-      toast.error('Please complete your medical profile first.');
-      return; // Stop feature content from loading
-    }
+   
     // Feature content will render normally if profile complete
 
     // else, feature content will render normally
@@ -165,16 +164,16 @@ const Dashboard = () => {
 
 
   const generateMealPlan = async () => {
+     if (!isProfileComplete()) {
+      toast.error('Please complete your medical profile.');
+      return;
+    } // ✅ added
     if (!user) {
       setError('Please log in to generate a meal plan');
       return;
     }
 
-    // ✅ added: ensure profile is complete before generating meal plan
-    if (!isProfileComplete()) {
-      toast.error('Please complete your medical profile.');
-      return;
-    } // ✅ added
+
 
     setLoading(true);
     setError(null);
@@ -946,15 +945,30 @@ const Dashboard = () => {
               )}
 
               <div className="mt-2 flex justify-center gap-2">
-                <label className="px-4 py-2 bg-[#059669] text-white rounded-lg cursor-pointer ">
-                  {foodImage ? "Re-upload" : "Upload Image"}
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={handleFoodUpload}
-                  />
-                </label>
+              <label
+  className="px-4 py-2 bg-[#059669] text-white rounded-lg cursor-pointer"
+  onClick={(e) => {
+    if (!isProfileComplete()) {
+      e.preventDefault(); // Prevent file dialog
+      toast.error('Please complete your medical profile first.');
+      return;
+    }
+    // otherwise, trigger the file input manually
+    const input = document.getElementById('food-upload-input');
+    input?.click();
+  }}
+>
+  {foodImage ? "Re-upload" : "Upload Image"}
+</label>
+
+<input
+  type="file"
+  id="food-upload-input"
+  accept="image/*"
+  className="hidden"
+  onChange={handleFoodUpload}
+/>
+
 
                 {foodImage && (
                   <button
