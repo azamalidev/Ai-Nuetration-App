@@ -111,9 +111,9 @@ const MyRequests = () => {
   };
 
   // Update handleJoinCall function to match RequestForDoctors implementation
-  const handleJoinCall = async (request: any) => {
+  const handleJoinCall = async (call_Id: any) => {
     try {
-      const callId = `consultation_${request._id}`;
+      const callId = `${call_Id}`;
 
       // Get user and token
       const user = JSON.parse(localStorage.getItem("user") || "{}");
@@ -142,7 +142,7 @@ const MyRequests = () => {
       localStorage.setItem("streamToken", data.token);
 
       // Navigate to call page
-      navigate(`/call/${callId}`);
+      navigate(`/call-now/${callId}`);
     } catch (error) {
       console.error("Error joining call:", error);
       toast.error("Failed to join video call");
@@ -203,13 +203,12 @@ const MyRequests = () => {
                   <p className="text-sm mt-1">
                     <strong>Status:</strong>{" "}
                     <span
-                      className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-                        req.status === "Approved"
+                      className={`px-2 py-0.5 rounded-full text-xs font-medium ${req.status === "Approved"
                           ? "bg-green-100 text-green-700"
                           : req.status === "Rejected"
-                          ? "bg-red-100 text-red-700"
-                          : "bg-yellow-100 text-yellow-700"
-                      }`}
+                            ? "bg-red-100 text-red-700"
+                            : "bg-yellow-100 text-yellow-700"
+                        }`}
                     >
                       {req.status}
                     </span>
@@ -256,7 +255,7 @@ const MyRequests = () => {
 
                     {selectedRequest.mode === "Video" && (
                       <button
-                        onClick={() => handleJoinCall(selectedRequest)}
+                        onClick={() => handleJoinCall(selectedRequest?.videoCallId)}
                         className="px-4 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600"
                       >
                         Join Call
@@ -285,11 +284,10 @@ const MyRequests = () => {
                     selectedRequest.chat.map((msg, idx) => (
                       <div
                         key={idx}
-                        className={`p-2 rounded-md max-w-[60%] ${
-                          msg.type === "patient"
+                        className={`p-2 rounded-md max-w-[60%] ${msg.type === "patient"
                             ? "bg-emerald-100 self-end"
                             : "bg-gray-100 self-start"
-                        }`}
+                          }`}
                       >
                         {msg.message}
                       </div>

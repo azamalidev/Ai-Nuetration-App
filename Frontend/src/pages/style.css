@@ -1,0 +1,15 @@
+.str-video__video.str-video__video--mirror {
+  width: 240px !important;             /* bigger width */
+  height: 180px !important;            /* bigger height */
+  border-radius: 12px !important;      /* slightly more rounded corners */
+  overflow: hidden !important;         /* clip overflow */
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4) !important; /* stronger shadow for depth */
+  background-color: #000 !important;   /* black background if video not loaded */
+  object-fit: cover !important;        /* cover the card */
+  transform: scaleX(-1) !important;    /* mirror effect */
+  position: fixed !important;          /* float on screen */
+  bottom: 20px !important;             /* distance from bottom */
+  right: 20px !important;              /* distance from right */
+  z-index: 9999 !important;            /* stay above everything */
+  transition: all 0.3s ease-in-out !important; /* smooth hover/move */
+}

@@ -1,15 +1,16 @@
-import React, { useEffect, useState } from "react";
+import  { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import {
   StreamCall,
   StreamTheme,
   useStreamVideoClient,
-  SpeakerLayout,
   CallControls,
 } from "@stream-io/video-react-sdk";
-import { useAuthContext } from "../authContext";
 import "./style.css";
-export default function DoctorCallPage() {
+import { CleanLayout } from "../components/VideoLayouts";
+import { useAuthContext } from "../authContext";
+
+export default function UserCallPage() {
   const { callId } = useParams();
   const { user } = useAuthContext();
   const client = useStreamVideoClient();
@@ -41,27 +42,26 @@ export default function DoctorCallPage() {
   useEffect(() => {
     if (!token || !client || !callId) return;
 
-    const createCall = client.call("default", callId);
-    setCall(createCall);
+    const joinedCall = client.call("default", callId);
+    setCall(joinedCall);
 
-    createCall
-      .getOrCreate()
-      .then(() => createCall.join({ token }))
-      .catch(console.error);
+    joinedCall.join({ token }).catch(console.error);
 
     return () => {
-      createCall.leave().catch(console.error);
+      joinedCall.leave().catch(console.error);
     };
   }, [token, client, callId]);
 
   if (!client || !token || !call) return <p>Loading call...</p>;
 
   return (
-    <StreamTheme>
-      <StreamCall call={call}>
-        <SpeakerLayout />
-        <CallControls />
-      </StreamCall>
-    </StreamTheme>
+   <StreamTheme>
+  <StreamCall call={call}>
+    <div style={{ width:'100px' ,height: "50vh", display: "flex", flexDirection: "column" , backgroundColor: "#000"}}>
+      <CleanLayout />
+      <CallControls />
+    </div>
+  </StreamCall>
+</StreamTheme>
   );
 }

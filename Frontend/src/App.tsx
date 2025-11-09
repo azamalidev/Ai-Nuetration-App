@@ -18,6 +18,7 @@ import Admin from "./pages/Admin";
 import Dash from "./AdminPanel/pages/Dashboard";
 import StreamVideoProvider from "./providers/StreamProvider";
 import CallPage from './pages/CallPage';
+import CallPageForUser from './pages/CallPageForUser';
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || "http://localhost:5000",
@@ -80,8 +81,23 @@ function App() {
           }
         >
 
+          
+
+          
+
 
         </Route>
+
+         <Route
+          path="/call-now/:callId"
+          element={
+
+            <StreamVideoProvider>
+              <CallPageForUser />
+            </StreamVideoProvider>
+
+          }
+        ></Route>
 
 
         <Route path="/profile" element={<HealthProfile />} />

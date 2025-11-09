@@ -938,7 +938,7 @@ const Dashboard = () => {
                 <img src={foodImage} alt="uploaded" className="mx-auto max-h-64 rounded-lg" />
               ) : (
                 <>
-                  <Camera className="mx-auto h-12 w-12 text-gray-400" />
+                  <Camera className="mx-auto h-12 w-12 text-[#059669]" />
                   <p className="mt-2 text-sm text-gray-600">
                     Upload a food image to analyze
                   </p>
@@ -946,7 +946,7 @@ const Dashboard = () => {
               )}
 
               <div className="mt-2 flex justify-center gap-2">
-                <label className="px-4 py-2 bg-blue-600 text-white rounded-lg cursor-pointer hover:bg-blue-700">
+                <label className="px-4 py-2 bg-[#059669] text-white rounded-lg cursor-pointer ">
                   {foodImage ? "Re-upload" : "Upload Image"}
                   <input
                     type="file"
@@ -1012,13 +1012,13 @@ const Dashboard = () => {
     {
       id: 'consultation',
       icon: Video,
-      title: 'Video Consultation',
+      title: 'Consultation',
       component: () => <VideoConsultation />,
     },
     {
       id: 'myRequests',       // <-- Add My Requests here
       icon: Clipboard,
-      title: 'My Requests',
+      title: 'Consultation Requests',
       component: () => <MyRequests />,
     },
   ];
