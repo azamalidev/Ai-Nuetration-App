@@ -10,7 +10,7 @@ const schema = Schema({
   dietaryPreferance: { type: String, required: false, maxlength: 50 },
   healthGoal: { type: String, required: false, maxlength: 50 },
   activityLevel: { type: String, required: false, maxlength: 50 },
-   profileImage: { type: String, default: '' }, // 👈 Add this line
+  profileImage: { type: String, default: '' }, // 👈 Add this line
   email: { type: String, required: true, maxlength: 50, unique: true },
   password: { type: String, required: true, maxlength: 5000 },
   role: {
@@ -24,7 +24,7 @@ const schema = Schema({
   yearsOfExperience: { type: Number, required: false },
   certifications: [{ type: String }],
   bio: { type: String, required: false, maxlength: 1000 },
-   consultationRequests: [
+  consultationRequests: [
     {
       nutritionist: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
       time: { type: String, required: true },
@@ -34,6 +34,11 @@ const schema = Schema({
       createdAt: { type: Date, default: Date.now }
     }
   ],
+  client_Device_Id: {
+    type: String,
+    unique: true,
+    default: () => 'UID' + Math.floor(100000 + Math.random() * 900000) // 👈 UID + 6 digit random number
+  }
 
 });
 export default mongoose.model("User", schema);

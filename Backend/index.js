@@ -14,20 +14,20 @@ async function startServer() {
   // ---- CORS ----
   app.use(
     cors({
-      origin: "http://localhost:5173",
-      credentials: true,
+      origin: "*",
     })
   );
   app.use("/api/getCallToken", getCallTokenRoute);
   app.use("/uploads", express.static("uploads"));
 
-  app.listen(5001, () => {
-    console.log("Server running on port 5000");
+
+  app.listen(3000, "0.0.0.0", () => {
+    console.log("Server running on port 3000");
   });
+
   // ---- JSON and URL Encoded parsers for NON file-upload routes ----
   app.use(express.json({ limit: "50mb" }));
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
-
   await loaders.init({ expressApp: app });
 
   // ---- MOUNT ROUTES ----  // Make sure multer is applied **inside your route** that handles file uploads
@@ -36,9 +36,9 @@ async function startServer() {
   app.use("/api", requestRoutes);
   app.use("/api", userRoute); // now /api/login, /api/register, /api/mealGen
   app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
-  const server = app.listen(config.env.port, () =>
-    console.log(`Server Started ~ :${config.env.port}`)
-  );
+
+
+
 
   process.on("uncaughtException", (err) => {
     console.log("uncaughtException! Shutting Down the Server...");

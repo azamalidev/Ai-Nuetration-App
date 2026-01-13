@@ -34,6 +34,8 @@ router.get("/all", controllers.getAll);
 router.get("/:id", controllers.getById);
 router.delete("/:id", controllers.delete);
 
+router.post("/sync-device", controllers.syncDevice);
+
 const serverClient = new StreamClient(
   process.env.STREAM_API_KEY,
   process.env.STREAM_SECRET_KEY

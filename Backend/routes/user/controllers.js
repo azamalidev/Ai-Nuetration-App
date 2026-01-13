@@ -19,6 +19,9 @@ const serverClient = new StreamClient(
 );
 
 
+
+
+
 const controller = {
   register: async (req, res) => {
     try {
@@ -101,6 +104,24 @@ const controller = {
       });
     } catch (error) {
       return httpResponse.INTERNAL_SERVER(res, error);
+    }
+  },
+
+  syncDevice: async (req, res) => {
+    try {
+      const { client_Device_Id } = req.body;
+      if (!client_Device_Id) {
+        return httpResponse.BAD_REQUEST(res, { error: "Device info is required" });
+      }
+
+      const data = await UserService.syncDevice(req.body);
+      if (data.message === "success") {
+        return httpResponse.SUCCESS(res, data.data);
+      } else {
+        return httpResponse.INTERNAL_SERVER(res, data.data);
+      }
+    } catch (error) {
+      return httpResponse.INTERNAL_SERVER(res, error.message);
     }
   },
 
