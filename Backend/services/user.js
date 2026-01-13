@@ -6,6 +6,23 @@ import jwt from "jsonwebtoken";
 
 
 const UserService = {
+
+  syncDevice: async (body) => {
+    try {
+      const { client_Device_Id } = body;
+      console.log("client_Device_Id", client_Device_Id);
+
+      const user = await UserModel.findOne({ client_Device_Id: client_Device_Id });
+      if (!user) {
+        return { message: "error", data: "User not found" };
+      }
+
+
+      return { message: "success", data: user };
+    } catch (error) {
+      return { message: "error", data: error.message };
+    }
+  },
   login: async ({ email, password }) => {
     try {
       const data = await UserModel.findOne({ email });
@@ -107,19 +124,19 @@ const UserService = {
     }
   },
 
-addConsultationRequest: async (userId, request) => {
-  try {
-    const user = await UserModel.findById(userId);
-    if (!user) return { message: "error", data: "User not found" };
+  addConsultationRequest: async (userId, request) => {
+    try {
+      const user = await UserModel.findById(userId);
+      if (!user) return { message: "error", data: "User not found" };
 
-    user.consultationRequests.push(request);
-    await user.save();
+      user.consultationRequests.push(request);
+      await user.save();
 
-    return { message: "success", data: user };
-  } catch (error) {
-    return { message: "error", data: error.message };
-  }
-},
+      return { message: "success", data: user };
+    } catch (error) {
+      return { message: "error", data: error.message };
+    }
+  },
 
   // Get single dish by ID
   getById: async (id) => {
