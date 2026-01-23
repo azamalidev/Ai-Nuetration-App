@@ -6,8 +6,6 @@ import authenticate from "../../middlewares/authenticate.js";
 
 const router = express.Router();
 
-
-
 // Meal CRUD operations
 router.post("/", controllers.create);
 router.get("/all", controllers.getAll);
@@ -17,7 +15,7 @@ router.get("/weekly/plan", controllers.getWeeklyMealPlan);
 router.get("/nutrition/summary", controllers.getNutritionSummary);
 router.get("/", controllers.getUserMeals);
 router.get("/:id", controllers.getById); // move this to the bottom
-router.put("/:id", validate(mealValidation.update), controllers.update);
+router.put("/:id", validate(mealValidation.update.body), controllers.update);
 router.delete("/:id", controllers.delete);
 
 export default router;

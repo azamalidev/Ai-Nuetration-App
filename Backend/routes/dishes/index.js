@@ -15,8 +15,18 @@ router.get("/dietary-preferences", controllers.getByDietaryPreferences);
 router.get("/:id", controllers.getById);
 
 // Protected routes - Require authentication
-router.post("/", authenticate, validate(dishValidation.create), controllers.create);
-router.put("/:id", authenticate, validate(dishValidation.update), controllers.update);
+router.post(
+  "/",
+  authenticate,
+  validate(dishValidation.create.body),
+  controllers.create,
+);
+router.put(
+  "/:id",
+  authenticate,
+  validate(dishValidation.update.body),
+  controllers.update,
+);
 router.delete("/:id", authenticate, controllers.delete);
 
-export default router; 
+export default router;

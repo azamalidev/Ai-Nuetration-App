@@ -1,10 +1,18 @@
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
-import { Clipboard, ClipboardList } from 'lucide-react';
-import { useAuthContext } from '../authContext';
-import React, { useState, useEffect } from 'react';
-import { Brain, Camera, ShoppingCart, Utensils, Video, Plus, X } from 'lucide-react';
+import { Clipboard, ClipboardList } from "lucide-react";
+import { useAuthContext } from "../authContext";
+import React, { useState, useEffect } from "react";
+import {
+  Brain,
+  Camera,
+  ShoppingCart,
+  Utensils,
+  Video,
+  Plus,
+  X,
+} from "lucide-react";
 import {
   apiService,
   MealPlan,
@@ -12,15 +20,14 @@ import {
   RecipeRecommendation,
   RecipeRecommendationRequest,
   GroceryItem,
-  GroceryListRequest
-} from '../api/api';
-import Navbar from '../components/navbar';
-import EmeraldLoader from '../components/loader';
-import VideoConsultation from '../components/VideoConsultation';
+  GroceryListRequest,
+} from "../api/api";
+import Navbar from "../components/navbar";
+import EmeraldLoader from "../components/loader";
+import VideoConsultation from "../components/VideoConsultation";
 // Dashboard.tsx
 import MyRequests from "../components/MyRequests"; // adjust the path
-import DocterRequests from '../components/RequestsForDocters';
-
+import DocterRequests from "../components/RequestsForDocters";
 
 const Dashboard = () => {
   const [foodImage, setFoodImage] = useState<string | null>(null);
@@ -29,14 +36,20 @@ const Dashboard = () => {
   const [analysisResult, setAnalysisResult] = useState<any | null>(null);
   const [analysisLoading, setAnalysisLoading] = useState(false);
   const [analysisError, setAnalysisError] = useState<string | null>(null);
-  let userData = localStorage.getItem('user');
+  let userData = localStorage.getItem("user");
   const userInfo = userData ? JSON.parse(userData) : null;
-  const [selectedFeature, setSelectedFeature] = useState(userInfo?.role == "NUTRITIONIST" ? 'consultation-requests' : 'meal-planning');
+  const [selectedFeature, setSelectedFeature] = useState(
+    userInfo?.role == "NUTRITIONIST"
+      ? "consultation-requests"
+      : "meal-planning",
+  );
   const [mealPlan, setMealPlan] = useState<MealPlan | null>(null);
   const [recipes, setRecipes] = useState<RecipeRecommendation[]>([]);
   const [groceryList, setGroceryList] = useState<GroceryItem[]>([]);
-  const [availableIngredients, setAvailableIngredients] = useState<string[]>([]);
-  const [newIngredient, setNewIngredient] = useState('');
+  const [availableIngredients, setAvailableIngredients] = useState<string[]>(
+    [],
+  );
+  const [newIngredient, setNewIngredient] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [approvingPlan, setApprovingPlan] = useState(false);
@@ -46,59 +59,57 @@ const Dashboard = () => {
   const [mealPlanApproved, setMealPlanApproved] = useState(false); // New state for tracking approval
   const [user, setUser] = useState<any | null>(null);
 
-
-
-
-
-
   const { isLoading } = useAuthContext();
 
   // ✅ added: helper to check whether user's medical/profile fields are filled
   const isProfileComplete = () => {
     if (!user) return false;
-    const required = ['age', 'gender', 'weight', 'height', 'dietaryPreferance', 'healthGoal', 'activityLevel'];
+    const required = [
+      "age",
+      "gender",
+      "weight",
+      "height",
+      "dietaryPreferance",
+      "healthGoal",
+      "activityLevel",
+    ];
     return required.every((key) => {
       const val = user[key];
       // treat 0 or '0' as valid if needed — here we require truthy values
-      return val !== undefined && val !== null && val !== '';
+      return val !== undefined && val !== null && val !== "";
     });
-    
   }; // ✅ added
-  
+
   const handleFeatureClick = (featureId: string) => {
     setSelectedFeature(featureId); // Tab activates
-   
+
     // Feature content will render normally if profile complete
 
     // else, feature content will render normally
   };
 
-
   const fetchProfile = async () => {
     try {
       setLoading(true);
-      const { apiService } = await import('../api/api');
+      const { apiService } = await import("../api/api");
       const response = await apiService.getUserProfile();
-
 
       if (response?.data) {
         const userData = {
-          name: response.data.data.name || '',
-          age: response.data.data.age || '',
-          gender: response.data.data.gender || '',
-          weight: response.data.data.weight || '',
-          height: response.data.data.height || '',
-          dietaryPreferance: response.data.data.dietaryPreferance || '',
-          healthGoal: response.data.data.healthGoal || '',
-          activityLevel: response.data.data.activityLevel || '',
-          id: response.data.data._id || '',
+          name: response.data.data.name || "",
+          age: response.data.data.age || "",
+          gender: response.data.data.gender || "",
+          weight: response.data.data.weight || "",
+          height: response.data.data.height || "",
+          dietaryPreferance: response.data.data.dietaryPreferance || "",
+          healthGoal: response.data.data.healthGoal || "",
+          activityLevel: response.data.data.activityLevel || "",
+          id: response.data.data._id || "",
         };
         setUser(userData);
-
-
       }
     } catch (error) {
-      console.error('Failed to fetch user profile:', error);
+      console.error("Failed to fetch user profile:", error);
     } finally {
       setLoading(false);
     }
@@ -118,7 +129,7 @@ const Dashboard = () => {
   const handleFoodUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     // ✅ added: block nutrition analysis upload if profile incomplete
     if (!isProfileComplete()) {
-      toast.error('Please complete your medical profile .');
+      toast.error("Please complete your medical profile .");
       return;
     } // ✅ added
 
@@ -136,7 +147,7 @@ const Dashboard = () => {
       const formData = new FormData();
       formData.append("image", file);
 
-      const res = await fetch("http://localhost:50001/api/analyzeFood", {
+      const res = await fetch("http://localhost:5000/api/analyzeFood", {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -158,22 +169,15 @@ const Dashboard = () => {
     }
   };
 
-
-
-
-
-
   const generateMealPlan = async () => {
-     if (!isProfileComplete()) {
-      toast.error('Please complete your medical profile.');
+    if (!isProfileComplete()) {
+      toast.error("Please complete your medical profile.");
       return;
     } // ✅ added
     if (!user) {
-      setError('Please log in to generate a meal plan');
+      setError("Please log in to generate a meal plan");
       return;
     }
-
-
 
     setLoading(true);
     setError(null);
@@ -189,15 +193,20 @@ const Dashboard = () => {
         healthGoal: user.healthGoal,
       };
 
+      console.log("📝 User Profile Data:", userProfile);
+      console.log("📋 User object:", user);
+
       const response = await apiService.generateMealPlan(userProfile);
       setMealPlan(response.data);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed to generate meal plan');
+      console.error("🚨 Meal plan generation error:", err);
+      toast.error(
+        err instanceof Error ? err.message : "Failed to generate meal plan",
+      );
     } finally {
       setLoading(false);
     }
   };
-
 
   const convertMealInfoToDish = (mealInfo: any, mealType: string): any => {
     return {
@@ -210,24 +219,23 @@ const Dashboard = () => {
       protein: mealInfo.protein,
       carbs: mealInfo.carbs,
       fat: mealInfo.fat,
-      meal_type: mealType,
-      is_vegetarian: user?.dietaryPreferance === 'vegetarian' || user?.dietaryPreferance === 'vegan',
-      is_vegan: user?.dietaryPreferance === 'vegan',
-      is_gluten_free: user?.dietaryPreferance === 'gluten-free',
-      is_dairy_free: user?.dietaryPreferance === 'dairy-free',
-      is_keto: user?.dietaryPreferance === 'keto',
-      cuisine_type: 'international',
-      difficulty_level: 'medium',
-      tags: [mealType, user?.dietaryPreferance || 'general'].filter(Boolean)
+      meal_type: "snack",
+      is_vegetarian:
+        user?.dietaryPreferance === "vegetarian" ||
+        user?.dietaryPreferance === "vegan",
+      is_vegan: user?.dietaryPreferance === "vegan",
+      is_gluten_free: user?.dietaryPreferance === "gluten-free",
+      is_dairy_free: user?.dietaryPreferance === "dairy-free",
+      is_keto: user?.dietaryPreferance === "keto",
+      cuisine_type: "international",
+      difficulty_level: "medium",
+      tags: [mealType, user?.dietaryPreferance || "general"].filter(Boolean),
     };
   };
 
-
-
-
   const approveMealPlan = async () => {
     if (!mealPlan || !user) {
-      toast.error('No meal plan to approve or user not logged in');
+      toast.error("No meal plan to approve or user not logged in");
       return;
     }
 
@@ -237,73 +245,98 @@ const Dashboard = () => {
 
     try {
       // Convert each meal to Dish format
-      const breakfastDish = convertMealInfoToDish(mealPlan.breakfast, 'breakfast');
-      const lunchDish = convertMealInfoToDish(mealPlan.lunch, 'lunch');
-      const dinnerDish = convertMealInfoToDish(mealPlan.dinner, 'dinner');
+      const breakfastDish = convertMealInfoToDish(
+        mealPlan.breakfast,
+        "breakfast",
+      );
+      const lunchDish = convertMealInfoToDish(mealPlan.lunch, "lunch");
+      const dinnerDish = convertMealInfoToDish(mealPlan.dinner, "dinner");
 
       // Save each dish and get back the saved dish with _id
       const [savedBreakfast, savedLunch, savedDinner] = await Promise.all([
         apiService.addDish(breakfastDish),
         apiService.addDish(lunchDish),
-        apiService.addDish(dinnerDish)
+        apiService.addDish(dinnerDish),
       ]);
 
-      console.log("savedBreakfast, savedLunch, savedDinner", savedBreakfast, savedLunch, savedDinner)
+      console.log(
+        "savedBreakfast, savedLunch, savedDinner",
+        savedBreakfast,
+        savedLunch,
+        savedDinner,
+      );
       // Construct the meal plan data including user ID and dish IDs
       const mealPlanData: any = {
         user_id: user.id,
-        plan_date: new Date().toISOString().split('T')[0],
+        plan_date: new Date().toISOString().split("T")[0],
         breakfast_dish_id: savedBreakfast.data._id,
         lunch_dish_id: savedLunch.data._id,
         dinner_dish_id: savedDinner.data._id,
         total_calories: mealPlan.totalCalories,
         total_protein: mealPlan.totalProtein,
         total_carbs: mealPlan.totalCarbs,
-        total_fat: mealPlan.totalFat
+        total_fat: mealPlan.totalFat,
       };
 
       // Save the meal plan
       await apiService.createMealPlan(mealPlanData);
 
       setMealPlanApproved(true); // Set approval state to true
-      toast.success('Meal plan approved and saved successfully!');
-
+      toast.success("Meal plan approved and saved successfully!");
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed to approve meal plan');
+      toast.error(
+        err instanceof Error ? err.message : "Failed to approve meal plan",
+      );
     } finally {
       setApprovingPlan(false);
     }
   };
 
-  const approveRecipe = async (recipe: RecipeRecommendation, index: number) => {
-    setApprovingRecipe(index);
-    setError(null);
-    setSuccessMessage(null);
+const approveRecipe = async (recipe: RecipeRecommendation, index: number) => {
+  setApprovingRecipe(index);
+  setError(null);
+  setSuccessMessage(null);
 
-    try {
-      const dishData = convertRecipeToDish(recipe);
-      await apiService.addDish(dishData);
+  try {
+    const dishData = convertRecipeToDish(recipe);
+    await apiService.addDish(dishData);
 
-      // Add this line to track the approved recipe
-      setApprovedRecipes(prev => [...prev, index]);
+    // Track the approved recipe
+    setApprovedRecipes((prev) => [...prev, index]);
 
-      setSuccessMessage(`Recipe "${recipe.name}" approved and saved successfully!`);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to approve recipe');
-    } finally {
-      setApprovingRecipe(null);
-    }
-  };
+    // ✅ Show toast notification
+    toast.success(`Recipe "${recipe.name}" saved successfully!`, {
+      position: "top-right",
+      autoClose: 3000,
+      hideProgressBar: false,
+      closeOnClick: true,
+      pauseOnHover: true,
+      draggable: true,
+      theme: "colored",
+    });
+
+    // Optional: still keep successMessage if you want inline text too
+    setSuccessMessage(`Recipe "${recipe.name}" saved successfully!`);
+  } catch (err) {
+    setError(err instanceof Error ? err.message : "Failed to save recipe");
+    toast.error(
+      err instanceof Error ? err.message : "Failed to save recipe",
+      { position: "top-left" },
+    );
+  } finally {
+    setApprovingRecipe(null);
+  }
+};
 
   const getRecipeRecommendations = async () => {
     // ✅ added: require completed profile for recipe recommendations
     if (!isProfileComplete()) {
-      toast.error('Please complete your medical profile ');
+      toast.error("Please complete your medical profile ");
       return;
     } // ✅ added
 
     if (availableIngredients.length === 0) {
-      setError('Please add some ingredients first');
+      setError("Please add some ingredients first");
       return;
     }
 
@@ -313,15 +346,21 @@ const Dashboard = () => {
     try {
       const requestData: RecipeRecommendationRequest = {
         availableIngredients,
-        dietaryPreferences: user?.dietaryPreferance ? [user.dietaryPreferance] : [],
+        dietaryPreferences: user?.dietaryPreferance
+          ? [user.dietaryPreferance]
+          : [],
         maxprep_time: 60,
-        cuisineType: 'any'
+        cuisineType: "any",
       };
 
       const response = await apiService.getRecipeRecommendations(requestData);
       setRecipes(response.data);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed to get recipe recommendations');
+      toast.error(
+        err instanceof Error
+          ? err.message
+          : "Failed to get recipe recommendations",
+      );
     } finally {
       setLoading(false);
     }
@@ -329,10 +368,9 @@ const Dashboard = () => {
 
   const generateGroceryList = async () => {
     // ✅ added: require completed profile for grocery generation
-   
 
     if (!mealPlan) {
-      setError('Please generate a meal plan first');
+      setError("Please generate a meal plan first");
       return;
     }
 
@@ -341,27 +379,34 @@ const Dashboard = () => {
 
     try {
       const requestData: GroceryListRequest = {
-        mealPlan
+        mealPlan,
       };
 
       const response = await apiService.generateGroceryList(requestData);
       setGroceryList(response.data);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed to generate grocery list');
+      toast.error(
+        err instanceof Error ? err.message : "Failed to generate grocery list",
+      );
     } finally {
       setLoading(false);
     }
   };
 
   const addIngredient = () => {
-    if (newIngredient.trim() && !availableIngredients.includes(newIngredient.trim())) {
+    if (
+      newIngredient.trim() &&
+      !availableIngredients.includes(newIngredient.trim())
+    ) {
       setAvailableIngredients([...availableIngredients, newIngredient.trim()]);
-      setNewIngredient('');
+      setNewIngredient("");
     }
   };
 
   const removeIngredient = (ingredient: string) => {
-    setAvailableIngredients(availableIngredients.filter(item => item !== ingredient));
+    setAvailableIngredients(
+      availableIngredients.filter((item) => item !== ingredient),
+    );
   };
 
   const MealPlanningComponent = () => (
@@ -372,23 +417,28 @@ const Dashboard = () => {
           <button
             onClick={generateMealPlan}
             disabled={loading || (mealPlan && mealPlanApproved)}
-            className={`px-4 py-2 rounded-lg transition-colors disabled:opacity-50 text-sm sm:text-base ${mealPlan && !loading && mealPlanApproved
-              ? 'bg-green-600 text-white hover:bg-green-700'
-              : 'bg-emerald-600 text-white hover:bg-emerald-700'
-              }`}
+            className={`px-4 py-2 rounded-lg transition-colors disabled:opacity-50 text-sm sm:text-base ${
+              mealPlan && !loading && mealPlanApproved
+                ? "bg-green-600 text-white hover:bg-green-700"
+                : "bg-emerald-600 text-white hover:bg-emerald-700"
+            }`}
           >
-            {loading ? 'Generating...' :
-              mealPlan && mealPlanApproved ? 'Meal Plan Generated' : 'Generate New Plan'}
+            {loading
+              ? "Generating..."
+              : mealPlan && mealPlanApproved
+                ? "Meal Plan Generated"
+                : "Generate New Plan"}
           </button>
 
           {mealPlan && !loading && (
             <button
               onClick={approveMealPlan}
               disabled={approvingPlan || mealPlanApproved}
-              className={`px-4 py-2 rounded-lg transition-colors disabled:opacity-50 flex items-center justify-center gap-2 text-sm sm:text-base ${mealPlanApproved
-                ? 'bg-green-600 text-white hover:bg-green-700'
-                : 'bg-blue-600 text-white hover:bg-blue-700'
-                }`}
+              className={`px-4 py-2 rounded-lg transition-colors disabled:opacity-50 flex items-center justify-center gap-2 text-sm sm:text-base ${
+                mealPlanApproved
+                  ? "bg-green-600 text-white hover:bg-green-700"
+                  : "bg-blue-600 text-white hover:bg-blue-700"
+              }`}
             >
               {approvingPlan ? (
                 <>
@@ -397,9 +447,9 @@ const Dashboard = () => {
                   <span className="sm:hidden">...</span>
                 </>
               ) : mealPlanApproved ? (
-                'Approved'
+                "Approved"
               ) : (
-                'Approve Plan'
+                "Approve Plan"
               )}
             </button>
           )}
@@ -432,22 +482,32 @@ const Dashboard = () => {
       {mealPlan && !loading && (
         <div className="space-y-6">
           <div className="bg-emerald-50 p-4 rounded-lg">
-            <h4 className="font-semibold text-emerald-800 mb-2">Daily Nutrition Summary</h4>
+            <h4 className="font-semibold text-emerald-800 mb-2">
+              Daily Nutrition Summary
+            </h4>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
               <div className="text-center">
-                <div className="font-semibold text-emerald-600">{mealPlan.totalCalories}</div>
+                <div className="font-semibold text-emerald-600">
+                  {mealPlan.totalCalories}
+                </div>
                 <div className="text-gray-600">Calories</div>
               </div>
               <div className="text-center">
-                <div className="font-semibold text-emerald-600">{mealPlan.totalProtein}g</div>
+                <div className="font-semibold text-emerald-600">
+                  {mealPlan.totalProtein}g
+                </div>
                 <div className="text-gray-600">Protein</div>
               </div>
               <div className="text-center">
-                <div className="font-semibold text-emerald-600">{mealPlan.totalCarbs}g</div>
+                <div className="font-semibold text-emerald-600">
+                  {mealPlan.totalCarbs}g
+                </div>
                 <div className="text-gray-600">Carbs</div>
               </div>
               <div className="text-center">
-                <div className="font-semibold text-emerald-600">{mealPlan.totalFat}g</div>
+                <div className="font-semibold text-emerald-600">
+                  {mealPlan.totalFat}g
+                </div>
                 <div className="text-gray-600">Fat</div>
               </div>
             </div>
@@ -456,9 +516,13 @@ const Dashboard = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {/* Breakfast */}
             <div className="border rounded-lg p-4">
-              <h4 className="font-semibold text-orange-600 mb-2">🌅 Breakfast</h4>
+              <h4 className="font-semibold text-orange-600 mb-2">
+                🌅 Breakfast
+              </h4>
               <h5 className="font-medium mb-2">{mealPlan.breakfast.name}</h5>
-              <p className="text-sm text-gray-600 mb-3">{mealPlan.breakfast.description}</p>
+              <p className="text-sm text-gray-600 mb-3">
+                {mealPlan.breakfast.description}
+              </p>
 
               <div className="text-xs text-gray-500 mb-3">
                 <span>{mealPlan.breakfast.calories} cal</span>
@@ -472,17 +536,21 @@ const Dashboard = () => {
                   <div>
                     <strong>Ingredients:</strong>
                     <ul className="list-disc list-inside text-xs mt-1">
-                      {mealPlan.breakfast.ingredients.map((ingredient, index) => (
-                        <li key={index}>{ingredient}</li>
-                      ))}
+                      {mealPlan.breakfast.ingredients.map(
+                        (ingredient, index) => (
+                          <li key={index}>{ingredient}</li>
+                        ),
+                      )}
                     </ul>
                   </div>
                   <div>
                     <strong>Instructions:</strong>
                     <ol className="list-decimal list-inside text-xs mt-1">
-                      {mealPlan.breakfast.instructions.map((instruction, index) => (
-                        <li key={index}>{instruction}</li>
-                      ))}
+                      {mealPlan.breakfast.instructions.map(
+                        (instruction, index) => (
+                          <li key={index}>{instruction}</li>
+                        ),
+                      )}
                     </ol>
                   </div>
                 </div>
@@ -493,7 +561,9 @@ const Dashboard = () => {
             <div className="border rounded-lg p-4">
               <h4 className="font-semibold text-yellow-600 mb-2">☀️ Lunch</h4>
               <h5 className="font-medium mb-2">{mealPlan.lunch.name}</h5>
-              <p className="text-sm text-gray-600 mb-3">{mealPlan.lunch.description}</p>
+              <p className="text-sm text-gray-600 mb-3">
+                {mealPlan.lunch.description}
+              </p>
 
               <div className="text-xs text-gray-500 mb-3">
                 <span>{mealPlan.lunch.calories} cal</span>
@@ -528,7 +598,9 @@ const Dashboard = () => {
             <div className="border rounded-lg p-4">
               <h4 className="font-semibold text-purple-600 mb-2">🌙 Dinner</h4>
               <h5 className="font-medium mb-2">{mealPlan.dinner.name}</h5>
-              <p className="text-sm text-gray-600 mb-3">{mealPlan.dinner.description}</p>
+              <p className="text-sm text-gray-600 mb-3">
+                {mealPlan.dinner.description}
+              </p>
 
               <div className="text-xs text-gray-500 mb-3">
                 <span>{mealPlan.dinner.calories} cal</span>
@@ -550,9 +622,11 @@ const Dashboard = () => {
                   <div>
                     <strong>Instructions:</strong>
                     <ol className="list-decimal list-inside text-xs mt-1">
-                      {mealPlan.dinner.instructions.map((instruction, index) => (
-                        <li key={index}>{instruction}</li>
-                      ))}
+                      {mealPlan.dinner.instructions.map(
+                        (instruction, index) => (
+                          <li key={index}>{instruction}</li>
+                        ),
+                      )}
                     </ol>
                   </div>
                 </div>
@@ -567,7 +641,6 @@ const Dashboard = () => {
           <p className="text-gray-600 mb-4">
             Generate your personalized meal plan based on your profile
           </p>
-
         </div>
       )}
     </div>
@@ -577,12 +650,13 @@ const Dashboard = () => {
     <div className="p-6 bg-white rounded-lg shadow-md">
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 gap-3">
         <h3 className="text-xl font-semibold">Recipe Recommendations</h3>
+        
         <button
           onClick={getRecipeRecommendations}
           disabled={loading || availableIngredients.length === 0}
           className="bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 transition-colors disabled:opacity-50 text-sm sm:text-base w-full sm:w-auto"
         >
-          {loading ? 'Finding Recipes...' : 'Get Recommendations'}
+          {loading ? "Finding Recipes..." : "Get Recommendations"}
         </button>
       </div>
       {/* Ingredient Input */}
@@ -595,7 +669,7 @@ const Dashboard = () => {
             onChange={(e) => setNewIngredient(e.target.value)}
             placeholder="Add an ingredient..."
             className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
-            onKeyPress={(e) => e.key === 'Enter' && addIngredient()}
+            onKeyPress={(e) => e.key === "Enter" && addIngredient()}
           />
           <button
             onClick={addIngredient}
@@ -610,11 +684,8 @@ const Dashboard = () => {
           </div>
         )}
 
-        {successMessage && (
-          <div className="mb-4 p-3 bg-green-100 border border-green-400 text-green-700 rounded">
-            {successMessage}
-          </div>
-        )}
+    
+
 
         {availableIngredients.length > 0 && (
           <div className="flex flex-wrap gap-2">
@@ -664,11 +735,14 @@ const Dashboard = () => {
               <h4 className="font-semibold mb-2">{recipe.name}</h4>
               <button
                 onClick={() => approveRecipe(recipe, index)}
-                disabled={approvingRecipe === index || approvedRecipes.includes(index)}
-                className={`px-3 py-1 rounded-lg transition-colors disabled:opacity-50 flex items-center gap-1 text-sm ml-2 ${approvedRecipes.includes(index)
-                  ? 'bg-green-500 text-white cursor-not-allowed'
-                  : 'bg-green-600 text-white hover:bg-green-700'
-                  }`}
+                disabled={
+                  approvingRecipe === index || approvedRecipes.includes(index)
+                }
+                className={`px-3 py-1 rounded-lg transition-colors disabled:opacity-50 flex items-center gap-1 text-sm ml-2 ${
+                  approvedRecipes.includes(index)
+                    ? "bg-green-500 text-white cursor-not-allowed"
+                    : "bg-green-600 text-white hover:bg-green-700"
+                }`}
               >
                 {approvingRecipe === index ? (
                   <>
@@ -676,13 +750,9 @@ const Dashboard = () => {
                     Saving...
                   </>
                 ) : approvedRecipes.includes(index) ? (
-                  <>
-                    ✓ Saved
-                  </>
+                  <>✓ Saved</>
                 ) : (
-                  <>
-                    Save
-                  </>
+                  <>Save</>
                 )}
               </button>
               <p className="text-sm text-gray-600 mb-3">{recipe.description}</p>
@@ -690,10 +760,15 @@ const Dashboard = () => {
               <div className="flex items-center gap-4 text-xs text-gray-500 mb-3">
                 <span>🍽️ {recipe.servings} servings</span>
                 <span>🔥 {recipe.calories} cal</span>
-                <span className={`px-2 py-1 rounded-full ${recipe.difficulty === 'easy' ? 'bg-green-100 text-green-800' :
-                  recipe.difficulty === 'medium' ? 'bg-yellow-100 text-yellow-800' :
-                    'bg-red-100 text-red-800'
-                  }`}>
+                <span
+                  className={`px-2 py-1 rounded-full ${
+                    recipe.difficulty === "easy"
+                      ? "bg-green-100 text-green-800"
+                      : recipe.difficulty === "medium"
+                        ? "bg-yellow-100 text-yellow-800"
+                        : "bg-red-100 text-red-800"
+                  }`}
+                >
                   {recipe.difficulty}
                 </span>
               </div>
@@ -725,9 +800,11 @@ const Dashboard = () => {
                   <div>
                     <strong>Instructions:</strong>
                     <ol className="list-decimal list-inside text-xs mt-1">
-                      {recipe.instructions.map((instruction, instructionIndex) => (
-                        <li key={instructionIndex}>{instruction}</li>
-                      ))}
+                      {recipe.instructions.map(
+                        (instruction, instructionIndex) => (
+                          <li key={instructionIndex}>{instruction}</li>
+                        ),
+                      )}
                     </ol>
                   </div>
                 </div>
@@ -737,13 +814,15 @@ const Dashboard = () => {
         </div>
       )}
 
-      {recipes.length === 0 && !loading && availableIngredients.length === 0 && (
-        <div className="text-center py-8">
-          <p className="text-gray-600 mb-4">
-            Add some ingredients to get personalized recipe recommendations
-          </p>
-        </div>
-      )}
+      {recipes.length === 0 &&
+        !loading &&
+        availableIngredients.length === 0 && (
+          <div className="text-center py-8">
+            <p className="text-gray-600 mb-4">
+              Add some ingredients to get personalized recipe recommendations
+            </p>
+          </div>
+        )}
     </div>
   );
 
@@ -758,17 +837,17 @@ const Dashboard = () => {
       protein: recipe.protein,
       carbs: 0, // Not provided in RecipeRecommendation
       fat: 0, // Not provided in RecipeRecommendation
-      meal_type: 'general',
-      is_vegetarian: recipe.tags.includes('vegetarian'),
-      is_vegan: recipe.tags.includes('vegan'),
-      is_gluten_free: recipe.tags.includes('gluten-free'),
-      is_dairy_free: recipe.tags.includes('dairy-free'),
-      is_keto: recipe.tags.includes('keto'),
-      cuisine_type: 'international',
+      meal_type: "snack",
+      is_vegetarian: recipe.tags.includes("vegetarian"),
+      is_vegan: recipe.tags.includes("vegan"),
+      is_gluten_free: recipe.tags.includes("gluten-free"),
+      is_dairy_free: recipe.tags.includes("dairy-free"),
+      is_keto: recipe.tags.includes("keto"),
+      cuisine_type: "international",
 
       difficulty_level: recipe.difficulty,
       user_id: user.id,
-      tags: recipe.tags
+      tags: recipe.tags,
     };
   };
 
@@ -782,7 +861,7 @@ const Dashboard = () => {
             disabled={loading || !mealPlan}
             className="bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 transition-colors disabled:opacity-50 text-sm sm:text-base"
           >
-            {loading ? 'Generating...' : 'Generate List'}
+            {loading ? "Generating..." : "Generate List"}
           </button>
 
           {groceryList.length > 0 && !loading && (
@@ -816,14 +895,19 @@ const Dashboard = () => {
       {groceryList.length > 0 && !loading && (
         <div className="space-y-4">
           {Object.entries(
-            groceryList.reduce((acc, item) => {
-              if (!acc[item.category]) acc[item.category] = [];
-              acc[item.category].push(item);
-              return acc;
-            }, {} as Record<string, GroceryItem[]>)
+            groceryList.reduce(
+              (acc, item) => {
+                if (!acc[item.category]) acc[item.category] = [];
+                acc[item.category].push(item);
+                return acc;
+              },
+              {} as Record<string, GroceryItem[]>,
+            ),
           ).map(([category, items]) => (
             <div key={category} className="border rounded-lg p-4">
-              <h4 className="font-semibold text-emerald-700 mb-3 capitalize">{category}</h4>
+              <h4 className="font-semibold text-emerald-700 mb-3 capitalize">
+                {category}
+              </h4>
               <div className="space-y-2">
                 {items.map((item, index) => (
                   <div key={index} className="flex items-center">
@@ -832,7 +916,9 @@ const Dashboard = () => {
                       className="mr-3 h-4 w-4 text-emerald-600 focus:ring-emerald-500 border-gray-300 rounded"
                     />
                     <span className="flex-1">{item.name}</span>
-                    <span className="text-sm text-gray-500">{item.quantity}</span>
+                    <span className="text-sm text-gray-500">
+                      {item.quantity}
+                    </span>
                   </div>
                 ))}
               </div>
@@ -847,7 +933,7 @@ const Dashboard = () => {
             Generate a meal plan first to create your shopping list
           </p>
           <button
-            onClick={() => setSelectedFeature('meal-planning')}
+            onClick={() => setSelectedFeature("meal-planning")}
             className="bg-emerald-600 text-white px-6 py-3 rounded-lg hover:bg-emerald-700 transition-colors"
           >
             Go to Meal Planning
@@ -873,172 +959,187 @@ const Dashboard = () => {
 
   const downloadGroceryList = () => {
     if (!groceryList || groceryList.length === 0) {
-      toast.error('No grocery list to download');
+      toast.error("No grocery list to download");
       return;
     }
 
     // Group items by category
-    const groupedItems = groceryList.reduce((acc, item) => {
-      if (!acc[item.category]) acc[item.category] = [];
-      acc[item.category].push(item);
-      return acc;
-    }, {} as Record<string, GroceryItem[]>);
+    const groupedItems = groceryList.reduce(
+      (acc, item) => {
+        if (!acc[item.category]) acc[item.category] = [];
+        acc[item.category].push(item);
+        return acc;
+      },
+      {} as Record<string, GroceryItem[]>,
+    );
 
     // Create text content
     let content = `Grocery List - ${new Date().toLocaleDateString()}\n\n`;
 
     Object.entries(groupedItems).forEach(([category, items]) => {
       content += `${category.toUpperCase()}\n`;
-      content += '='.repeat(category.length) + '\n';
-      items.forEach(item => {
+      content += "=".repeat(category.length) + "\n";
+      items.forEach((item) => {
         content += `☐ ${item.name} - ${item.quantity}\n`;
       });
-      content += '\n';
+      content += "\n";
     });
 
     // Create and download file
-    const blob = new Blob([content], { type: 'text/plain' });
+    const blob = new Blob([content], { type: "text/plain" });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
+    const a = document.createElement("a");
     a.href = url;
-    a.download = `grocery-list-${new Date().toISOString().split('T')[0]}.txt`;
+    a.download = `grocery-list-${new Date().toISOString().split("T")[0]}.txt`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
   };
 
+  const features =
+    userInfo.role == "NUTRITIONIST"
+      ? [
+          {
+            id: "consultation-requests",
+            icon: ClipboardList,
+            title: "Consultaion Requests",
+            component: DocterRequests,
+          },
+        ]
+      : [
+          {
+            id: "meal-planning",
+            icon: Brain,
+            title: "AI Meal Planning",
+            component: MealPlanningComponent,
+          },
+          {
+            id: "nutrition-analysis",
+            icon: Camera,
+            title: "Nutrition Analysis",
+            component: () => (
+              <div className="p-6 bg-white rounded-lg shadow-md">
+                <h3 className="text-xl font-semibold mb-4">Food Analysis</h3>
 
+                <div className="space-y-4">
+                  {/* Image upload / preview */}
+                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center relative">
+                    {foodImage ? (
+                      <img
+                        src={foodImage}
+                        alt="uploaded"
+                        className="mx-auto max-h-64 rounded-lg"
+                      />
+                    ) : (
+                      <>
+                        <Camera className="mx-auto h-12 w-12 text-[#059669]" />
+                        <p className="mt-2 text-sm text-gray-600">
+                          Upload a food image to analyze
+                        </p>
+                      </>
+                    )}
 
-  const features = userInfo.role == "NUTRITIONIST" ? [{
-    id: 'consultation-requests',
-    icon: ClipboardList,
-    title: 'Consultaion Requests',
-    component: DocterRequests,
-  },] : [
-    {
-      id: 'meal-planning',
-      icon: Brain,
-      title: 'AI Meal Planning',
-      component: MealPlanningComponent,
-    },
-    {
-      id: 'nutrition-analysis',
-      icon: Camera,
-      title: 'Nutrition Analysis',
-      component: () => (
-        <div className="p-6 bg-white rounded-lg shadow-md">
-          <h3 className="text-xl font-semibold mb-4">Food Analysis</h3>
+                    <div className="mt-2 flex justify-center gap-2">
+                      <label
+                        className="px-4 py-2 bg-[#059669] text-white rounded-lg cursor-pointer"
+                        onClick={(e) => {
+                          if (!isProfileComplete()) {
+                            e.preventDefault(); // Prevent file dialog
+                            toast.error(
+                              "Please complete your medical profile first.",
+                            );
+                            return;
+                          }
+                          // otherwise, trigger the file input manually
+                          const input =
+                            document.getElementById("food-upload-input");
+                          input?.click();
+                        }}
+                      >
+                        {foodImage ? "Re-upload" : "Upload Image"}
+                      </label>
 
-          <div className="space-y-4">
-            {/* Image upload / preview */}
-            <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center relative">
-              {foodImage ? (
-                <img src={foodImage} alt="uploaded" className="mx-auto max-h-64 rounded-lg" />
-              ) : (
-                <>
-                  <Camera className="mx-auto h-12 w-12 text-[#059669]" />
-                  <p className="mt-2 text-sm text-gray-600">
-                    Upload a food image to analyze
-                  </p>
-                </>
-              )}
+                      <input
+                        type="file"
+                        id="food-upload-input"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={handleFoodUpload}
+                      />
 
-              <div className="mt-2 flex justify-center gap-2">
-              <label
-  className="px-4 py-2 bg-[#059669] text-white rounded-lg cursor-pointer"
-  onClick={(e) => {
-    if (!isProfileComplete()) {
-      e.preventDefault(); // Prevent file dialog
-      toast.error('Please complete your medical profile first.');
-      return;
-    }
-    // otherwise, trigger the file input manually
-    const input = document.getElementById('food-upload-input');
-    input?.click();
-  }}
->
-  {foodImage ? "Re-upload" : "Upload Image"}
-</label>
+                      {foodImage && (
+                        <button
+                          onClick={() => {
+                            setFoodImage(null);
+                            setFoodFile(null);
+                            setAnalysisResult(null);
+                            setAnalysisError(null);
+                          }}
+                          className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+                        >
+                          Delete
+                        </button>
+                      )}
+                    </div>
+                  </div>
 
-<input
-  type="file"
-  id="food-upload-input"
-  accept="image/*"
-  className="hidden"
-  onChange={handleFoodUpload}
-/>
+                  {/* Loading */}
+                  {analysisLoading && (
+                    <p className="text-gray-600 text-center">Analyzing...</p>
+                  )}
 
+                  {/* Error */}
+                  {analysisError && (
+                    <div className="p-3 bg-red-100 border border-red-400 text-red-700 rounded text-sm">
+                      {analysisError}
+                    </div>
+                  )}
 
-                {foodImage && (
-                  <button
-                    onClick={() => {
-                      setFoodImage(null);
-                      setFoodFile(null);
-                      setAnalysisResult(null);
-                      setAnalysisError(null);
-                    }}
-                    className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
-                  >
-                    Delete
-                  </button>
-                )}
+                  {/* Analysis result */}
+                  {analysisResult && (
+                    <div className="p-4 bg-emerald-50 rounded-lg text-sm text-gray-700 space-y-2">
+                      <p>🍽 Calories: {analysisResult.calories}</p>
+                      <p>🥦 Fiber: {analysisResult.fiber}</p>
+                      <p>🥩 Fat: {analysisResult.fat}</p>
+                      <p>🍚 Carbs: {analysisResult.carbs}</p>
+                      <p>💪 Protein: {analysisResult.protein}</p>
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
+            ),
+          },
 
-            {/* Loading */}
-            {analysisLoading && <p className="text-gray-600 text-center">Analyzing...</p>}
+          {
+            id: "grocery-list",
+            icon: ShoppingCart,
+            title: "Grocery List",
+            component: GroceryListComponent,
+          },
+          {
+            id: "recipes",
+            icon: Utensils,
+            title: "Recipes",
+            component: RecipesComponent,
+          },
+          {
+            id: "consultation",
+            icon: Video,
+            title: "Consultation",
+            component: () => <VideoConsultation />,
+          },
+          {
+            id: "myRequests", // <-- Add My Requests here
+            icon: Clipboard,
+            title: "Consultation Requests",
+            component: () => <MyRequests />,
+          },
+        ];
 
-            {/* Error */}
-            {analysisError && (
-              <div className="p-3 bg-red-100 border border-red-400 text-red-700 rounded text-sm">
-                {analysisError}
-              </div>
-            )}
-
-            {/* Analysis result */}
-            {analysisResult && (
-              <div className="p-4 bg-emerald-50 rounded-lg text-sm text-gray-700 space-y-2">
-                <p>🍽 Calories: {analysisResult.calories}</p>
-                <p>🥦 Fiber: {analysisResult.fiber}</p>
-                <p>🥩 Fat: {analysisResult.fat}</p>
-                <p>🍚 Carbs: {analysisResult.carbs}</p>
-                <p>💪 Protein: {analysisResult.protein}</p>
-              </div>
-            )}
-          </div>
-        </div>
-      )
-    },
-
-    {
-      id: 'grocery-list',
-      icon: ShoppingCart,
-      title: 'Grocery List',
-      component: GroceryListComponent,
-    },
-    {
-      id: 'recipes',
-      icon: Utensils,
-      title: 'Recipes',
-      component: RecipesComponent,
-    },
-    {
-      id: 'consultation',
-      icon: Video,
-      title: 'Consultation',
-      component: () => <VideoConsultation />,
-    },
-    {
-      id: 'myRequests',       // <-- Add My Requests here
-      icon: Clipboard,
-      title: 'Consultation Requests',
-      component: () => <MyRequests />,
-    },
-  ];
-
-
-  const SelectedFeature = features.find((f) => f.id === selectedFeature)?.component;
+  const SelectedFeature = features.find(
+    (f) => f.id === selectedFeature,
+  )?.component;
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
@@ -1050,11 +1151,11 @@ const Dashboard = () => {
               <button
                 key={feature.id}
                 onClick={() => handleFeatureClick(feature.id)} // <-- Use the new helper here
-                className={`flex items-center space-x-2 px-4 py-2 rounded-lg whitespace-nowrap transition-colors ${selectedFeature === feature.id
-
-                  ? 'bg-emerald-600 text-white'
-                  : 'bg-white text-gray-700 hover:bg-gray-50'
-                  }`}
+                className={`flex items-center space-x-2 px-4 py-2 rounded-lg whitespace-nowrap transition-colors ${
+                  selectedFeature === feature.id
+                    ? "bg-emerald-600 text-white"
+                    : "bg-white text-gray-700 hover:bg-gray-50"
+                }`}
               >
                 <Icon className="h-5 w-5" />
                 <span>{feature.title}</span>
@@ -1063,11 +1164,9 @@ const Dashboard = () => {
           })}
         </div>
 
-
         <div className="mt-8">
           {SelectedFeature ? <SelectedFeature /> : null}
         </div>
-
       </main>
     </div>
   );

@@ -15,12 +15,8 @@ import mongoose from "mongoose";
 // Initialize Stream client
 const serverClient = new StreamClient(
   process.env.STREAM_API_KEY,
-  process.env.STREAM_SECRET_KEY
+  process.env.STREAM_SECRET_KEY,
 );
-
-
-
-
 
 const controller = {
   register: async (req, res) => {
@@ -36,7 +32,9 @@ const controller = {
 
         // generate unique filename
         const ext = path.extname(req.file.originalname);
-        const uniqueName = `${Date.now()}-${Math.round(Math.random() * 1e9)}${ext}`;
+        const uniqueName = `${Date.now()}-${Math.round(
+          Math.random() * 1e9,
+        )}${ext}`;
 
         // full path on disk
         const filePath = path.join(uploadDir, uniqueName);
@@ -54,8 +52,13 @@ const controller = {
       };
 
       // Handle certifications if provided as comma-separated string
-      if (userData.certifications && typeof userData.certifications === "string") {
-        userData.certifications = userData.certifications.split(",").map((s) => s.trim());
+      if (
+        userData.certifications &&
+        typeof userData.certifications === "string"
+      ) {
+        userData.certifications = userData.certifications
+          .split(",")
+          .map((s) => s.trim());
       }
 
       const addResponse = await UserService.add(userData);
@@ -111,7 +114,9 @@ const controller = {
     try {
       const { client_Device_Id } = req.body;
       if (!client_Device_Id) {
-        return httpResponse.BAD_REQUEST(res, { error: "Device info is required" });
+        return httpResponse.BAD_REQUEST(res, {
+          error: "Device info is required",
+        });
       }
 
       const data = await UserService.syncDevice(req.body);
@@ -203,7 +208,9 @@ const controller = {
       return res.status(201).json({ message: "Request sent", data: request });
     } catch (error) {
       console.error(error);
-      return res.status(500).json({ message: "Failed to send request", error: error.message });
+      return res
+        .status(500)
+        .json({ message: "Failed to send request", error: error.message });
     }
   },
   sendConsultationRequest: async (req, res) => {
@@ -220,37 +227,49 @@ const controller = {
       }
 
       // Add consultation request to user
-      const updatedUser = await UserService.addConsultationRequest(req.user._id, {
-        nutritionist: nutritionistId,
-        time,
-        reason,
-        mode,
-      });
+      const updatedUser = await UserService.addConsultationRequest(
+        req.user._id,
+        {
+          nutritionist: nutritionistId,
+          time,
+          reason,
+          mode,
+        },
+      );
 
       if (updatedUser.message === "success") {
-        return res.status(201).json({ message: "Request sent successfully", data: updatedUser.data });
+        return res.status(201).json({
+          message: "Request sent successfully",
+          data: updatedUser.data,
+        });
       } else {
-        return res.status(500).json({ message: "Failed to send request", error: updatedUser.data });
+        return res
+          .status(500)
+          .json({ message: "Failed to send request", error: updatedUser.data });
       }
-
     } catch (error) {
       console.error(error);
-      return res.status(500).json({ message: "Failed to send request", error: error.message });
+      return res
+        .status(500)
+        .json({ message: "Failed to send request", error: error.message });
     }
   },
 
   // Get pending requests for a nutritionist
   getPendingConsultations: async (req, res) => {
     try {
-      const requests = await Consultation.find({ nutritionist: req.user._id, status: "pending" })
-        .populate("user", "-password");
+      const requests = await Consultation.find({
+        nutritionist: req.user._id,
+        status: "pending",
+      }).populate("user", "-password");
       return res.status(200).json({ data: requests });
     } catch (error) {
       console.error(error);
-      return res.status(500).json({ message: "Failed to fetch requests", error: error.message });
+      return res
+        .status(500)
+        .json({ message: "Failed to fetch requests", error: error.message });
     }
   },
-
 
   updateConsultationStatus: async (req, res) => {
     try {
@@ -260,7 +279,7 @@ const controller = {
       const updated = await Consultation.findByIdAndUpdate(
         requestId,
         { status },
-        { new: true }
+        { new: true },
       );
 
       if (!updated) {
@@ -318,8 +337,6 @@ const controller = {
     }
   },
 
-
-
   analyzeFoodImage: async (req, res) => {
     try {
       if (!req.file) {
@@ -348,6 +365,12 @@ const controller = {
   generateMealPlan: async (req, res) => {
     try {
       console.log("=== MEAL PLAN GENERATION STARTED ===");
+      console.log("📝 Request headers:", {
+        auth: req.headers.authorization ? "Present" : "Missing",
+        contentType: req.headers["content-type"],
+      });
+      console.log("👤 req.user:", req.user);
+      console.log("📦 Request body:", req.body);
 
       // Keep user validation
       const userData = await UserService.getById(req.user._id);
@@ -523,8 +546,13 @@ Return ONLY valid JSON with no extra text or formatting:
       
       Respond with JSON in this exact format:`;
 
-      const apiKey =
-        process.env.GEMINI_API_KEY || "AIzaSyDrogsLkcPHlj3lA2b2vYJIBSFkr4sMk-I";
+      const apiKey = process.env.GEMINI_API_KEY;
+      if (!apiKey) {
+        return httpResponse.INTERNAL_SERVER(res, {
+          error:
+            "Gemini API key is not configured. Please set GEMINI_API_KEY in environment variables.",
+        });
+      }
       const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
       const requestBody = {
         systemInstruction: {
@@ -633,8 +661,13 @@ Return ONLY valid JSON with no extra text or formatting:
       
       Respond with JSON in this exact format:`;
 
-      const apiKey =
-        process.env.GEMINI_API_KEY || "AIzaSyDrogsLkcPHlj3lA2b2vYJIBSFkr4sMk-I";
+      const apiKey = process.env.GEMINI_API_KEY;
+      if (!apiKey) {
+        return httpResponse.INTERNAL_SERVER(res, {
+          error:
+            "Gemini API key is not configured. Please set GEMINI_API_KEY in environment variables.",
+        });
+      }
       const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
 
       const requestBody = {
@@ -661,7 +694,7 @@ Return ONLY valid JSON with no extra text or formatting:
             parts: [
               {
                 text: `Generate a grocery list for this meal plan: ${JSON.stringify(
-                  mealPlan
+                  mealPlan,
                 )}`,
               },
             ],
