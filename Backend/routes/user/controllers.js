@@ -22,6 +22,123 @@ const serverClient = new StreamClient(
 
 
 
+export const checkFoodForUser = async ({
+  item,
+  quantity,
+  unit,
+  userProfile,
+  base64Image = null,
+  mimetype = null,
+}) => {
+  const apiKey = process.env.GEMINI_API_KEY;
+
+  const url = `https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+
+  const prompt = `
+You are a nutrition and fitness expert.
+Give general dietary advice only (not medical).
+
+User Profile:
+Age: ${userProfile.age}
+Gender: ${userProfile.gender}
+Weight: ${userProfile.weight} kg
+Height: ${userProfile.height} cm
+Activity Level: ${userProfile.activityLevel}
+Dietary Preference: ${userProfile.dietaryPreferance}
+Health Goal: ${userProfile.healthGoal}
+
+Food Item:
+Item: ${item}
+Quantity: ${quantity} ${unit}
+
+Respond ONLY in valid JSON:
+{
+  "isGood": true,
+  "recommendedQuantity": "string",
+  "reason": "string",
+  "tips": "string"
+}
+`;
+
+  // 🧠 Build parts dynamically (image OPTIONAL)
+  const parts = [];
+
+  if (base64Image && mimetype) {
+    parts.push({
+      inlineData: {
+        mimeType: mimetype,
+        data: base64Image,
+      },
+    });
+  }
+
+  parts.push({ text: prompt });
+
+  const requestBody = {
+    contents: [
+      {
+        parts,
+      },
+    ],
+    generationConfig: {
+      temperature: 0.6,
+      maxOutputTokens: 1024,
+    },
+  };
+
+  const response = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(requestBody),
+  });
+
+  if (!response.ok) {
+    const errText = await response.text();
+    throw new Error(`Gemini API Error: ${errText}`);
+  }
+
+  const data = await response.json();
+
+  const text =
+    data?.candidates?.[0]?.content?.parts
+      ?.map(p => p.text || "")
+      .join("") || "";
+
+
+      console.log(text, "text")
+  // 🛡️ Safe JSON parsing
+  return safeParseAIJSON(text);
+
+};
+
+function safeParseAIJSON(text) {
+  if (!text) return fallback();
+
+  const cleanText = text.replace(/```json|```/g, "").trim();
+
+  // 🔥 Detect incomplete JSON
+  if (cleanText.includes('"reason":') && !cleanText.includes('}')) {
+    return fallback();
+  }
+
+  try {
+    return JSON.parse(cleanText);
+  } catch {
+    const match = cleanText.match(/\{[\s\S]*\}/);
+    if (match) {
+      try {
+        return JSON.parse(match[0]);
+      } catch {}
+    }
+    return fallback();
+  }
+}
+
+
+
+
+
+
 const controller = {
   register: async (req, res) => {
     try {
@@ -124,6 +241,52 @@ const controller = {
       return httpResponse.INTERNAL_SERVER(res, error.message);
     }
   },
+
+  checkDietForMe: async (req, res) => {
+    try {
+      const { client_Device_Id, item, quantity, unit } = req.body;
+
+      const base64Image = req?.file?.buffer?.toString("base64");
+
+
+      if (!client_Device_Id || !item || !quantity) {
+        return httpResponse.BAD_REQUEST(res, {
+          error: "Missing required device data"
+        });
+      }
+
+      // 1️⃣ Find user using device ID
+      const userProfile = await UserService.UserProfileByDeviceId(client_Device_Id);
+
+      if (!userProfile) {
+        return httpResponse.NOT_FOUND(res, {
+          error: "User not found for this device"
+        });
+      }
+
+      // 2️⃣ Send data to Gemini AI
+      const aiResponse = await checkFoodForUser({
+        item,
+        quantity,
+        unit,
+        mimetype: req?.file?.mimetype,
+        base64Image,
+        userProfile
+      });
+
+      return httpResponse.SUCCESS(res, {
+        deviceId: client_Device_Id,
+        item,
+        result: aiResponse
+      });
+
+    } catch (error) {
+      return httpResponse.INTERNAL_SERVER(res, {
+        error: error.message
+      });
+    }
+  },
+
 
   update: async (req, res) => {
     req.body.id = req.user._id;
@@ -524,7 +687,7 @@ Return ONLY valid JSON with no extra text or formatting:
       Respond with JSON in this exact format:`;
 
       const apiKey =
-        process.env.GEMINI_API_KEY || "AIzaSyDrogsLkcPHlj3lA2b2vYJIBSFkr4sMk-I";
+        process.env.GEMINI_API_KEY || "";
       const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
       const requestBody = {
         systemInstruction: {
@@ -634,7 +797,7 @@ Return ONLY valid JSON with no extra text or formatting:
       Respond with JSON in this exact format:`;
 
       const apiKey =
-        process.env.GEMINI_API_KEY || "AIzaSyDrogsLkcPHlj3lA2b2vYJIBSFkr4sMk-I";
+        process.env.GEMINI_API_KEY || "";
       const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
 
       const requestBody = {

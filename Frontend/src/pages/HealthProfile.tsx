@@ -1,6 +1,6 @@
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-
+import { Copy, Check } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import {
   Edit2,
@@ -29,7 +29,14 @@ function HealthProfile() {
   const [recipeData, setRecipeData] = useState<any[]>([]);
   const [showMealsComponent, setShowMealsComponent] = useState(false);
   const [showRecipeComponent, setShowRecipeComponent] = useState(false);
+const [copied, setCopied] = useState(false);
 
+  const handleCopy = async () => {
+    if (!profileData?.client_Device_Id) return;
+    await navigator.clipboard.writeText(profileData.client_Device_Id);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+  };
   const [profileData, setProfileData] = useState<any>({
     name: "",
     age: "",
@@ -45,6 +52,7 @@ function HealthProfile() {
     yearsOfExperience: "",
     specialization: "",
     qualifications: "",
+    client_Device_Id: "",
   });
 
   const fetchProfile = async () => {
@@ -70,6 +78,7 @@ function HealthProfile() {
           yearsOfExperience: response.data.data.yearsOfExperience || "",
           specialization: response.data.data.specialization || "",
           qualifications: response.data.data.qualifications || "",
+          client_Device_Id: response.data.data.client_Device_Id || "",
         };
         setProfileData(userData);
 
@@ -253,12 +262,39 @@ function HealthProfile() {
                   <p className="text-gray-600 text-base sm:text-lg">
                     Health Profile Dashboard
                   </p>
-                  <div className="flex items-center justify-center sm:justify-start mt-2">
-                    <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-emerald-100 text-emerald-800">
-                      <Heart className="w-4 h-4 mr-1" />
-                      {formatValue(profileData.healthGoal)}
-                    </span>
-                  </div>
+                  <div className="mt-3 flex flex-wrap items-center gap-3 text-sm text-gray-700">
+      
+      {/* Health Goal */}
+      <div className="flex items-center gap-1 text-emerald-600 font-medium">
+        <Heart className="w-4 h-4" />
+        {formatValue(profileData.healthGoal)}
+      </div>
+
+      <span className="text-gray-300">|</span>
+
+      {/* Device ID */}
+      <div className="flex items-center gap-2">
+        <span className="text-gray-500">Device ID:</span>
+
+        <span className="font-mono text-gray-900">
+          {profileData?.client_Device_Id || "N/A"}
+        </span>
+
+        {/* Copy Button */}
+        <button
+          onClick={handleCopy}
+          className="text-gray-400 hover:text-gray-700 transition"
+          title="Copy Device ID"
+        >
+          {copied ? (
+            <Check className="w-4 h-4 text-emerald-500" />
+          ) : (
+            <Copy className="w-4 h-4" />
+          )}
+        </button>
+      </div>
+    </div>
+
                 </div>
               </div>
               <button
@@ -417,7 +453,7 @@ function HealthProfile() {
                     </p>
                     <div className="text-lg text-emerald-900 font-medium">
                       {profileData?.certifications &&
-                      profileData?.certifications?.length > 0 ? (
+                        profileData?.certifications?.length > 0 ? (
                         <div className="flex flex-wrap gap-2">
                           {profileData?.certifications?.map(
                             (cert: string, index: number) => (

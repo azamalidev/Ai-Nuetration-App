@@ -36,6 +36,9 @@ router.delete("/:id", controllers.delete);
 
 router.post("/sync-device", controllers.syncDevice);
 
+router.post("/check-diet", controllers.checkDietForMe);
+
+
 const serverClient = new StreamClient(
   process.env.STREAM_API_KEY,
   process.env.STREAM_SECRET_KEY

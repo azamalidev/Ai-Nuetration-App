@@ -49,6 +49,15 @@ const UserService = {
     }
   },
 
+  UserProfileByDeviceId: async (client_Device_Id) => {
+    try {
+      const prof = await UserModel.findOne({ client_Device_Id }).select({ password: 0 });
+      return prof
+    } catch (error) {
+      return { message: "error", data: error.message };
+    }
+  },
+
   getNutratious: async () => {
     try {
       const data = await UserModel.find({ role: "NUTRITIONIST" }); // 👈 use .find()
