@@ -1,5 +1,6 @@
-import { toast } from "react-toastify";
+import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+
 
 import { Clipboard, ClipboardList } from "lucide-react";
 import { useAuthContext } from "../authContext";
@@ -60,33 +61,44 @@ const Dashboard = () => {
   const [user, setUser] = useState<any | null>(null);
 
   const { isLoading } = useAuthContext();
+const featuresRequiringProfile = [
+  "meal-planning",
+  "nutrition-analysis",
+  "recipes",
+  "grocery-list",
+];
 
-  // ✅ added: helper to check whether user's medical/profile fields are filled
-  const isProfileComplete = () => {
-    if (!user) return false;
-    const required = [
-      "age",
-      "gender",
-      "weight",
-      "height",
-      "dietaryPreferance",
-      "healthGoal",
-      "activityLevel",
-    ];
-    return required.every((key) => {
-      const val = user[key];
-      // treat 0 or '0' as valid if needed — here we require truthy values
-      return val !== undefined && val !== null && val !== "";
-    });
-  }; // ✅ added
+const isProfileComplete = (currentUser: any = user || userInfo) => {
+  if (!currentUser) return false;
 
-  const handleFeatureClick = (featureId: string) => {
-    setSelectedFeature(featureId); // Tab activates
+  return !!(
+    currentUser.age &&
+    currentUser.gender &&
+    currentUser.weight &&
+    currentUser.height &&
+    currentUser.dietaryPreferance &&
+    currentUser.healthGoal &&
+    currentUser.activityLevel
+  );
+};
 
-    // Feature content will render normally if profile complete
 
-    // else, feature content will render normally
-  };
+const handleFeatureClick = (featureId: string) => {
+  // Switch tab first
+  setSelectedFeature(featureId);
+
+  // Get current user from state or localStorage fallback
+  const currentUser = user || userInfo;
+
+  // Show toast if profile incomplete
+  if (featuresRequiringProfile.includes(featureId) && !isProfileComplete(currentUser)) {
+    setTimeout(() => {
+      toast.error("Please complete your medical profile first!");
+    }, 100); // small delay ensures toast shows after tab renders
+  }
+};
+
+
 
   const fetchProfile = async () => {
     try {
@@ -143,7 +155,7 @@ const Dashboard = () => {
     setAnalysisResult(null);
 
     try {
-      const token = localStorage.getItem("token");
+      const token = localStorage.getItem("authToken");
       const formData = new FormData();
       formData.append("image", file);
 
@@ -292,41 +304,41 @@ const Dashboard = () => {
     }
   };
 
-const approveRecipe = async (recipe: RecipeRecommendation, index: number) => {
-  setApprovingRecipe(index);
-  setError(null);
-  setSuccessMessage(null);
+  const approveRecipe = async (recipe: RecipeRecommendation, index: number) => {
+    setApprovingRecipe(index);
+    setError(null);
+    setSuccessMessage(null);
 
-  try {
-    const dishData = convertRecipeToDish(recipe);
-    await apiService.addDish(dishData);
+    try {
+      const dishData = convertRecipeToDish(recipe);
+      await apiService.addDish(dishData);
 
-    // Track the approved recipe
-    setApprovedRecipes((prev) => [...prev, index]);
+      // Track the approved recipe
+      setApprovedRecipes((prev) => [...prev, index]);
 
-    // ✅ Show toast notification
-    toast.success(`Recipe "${recipe.name}" saved successfully!`, {
-      position: "top-right",
-      autoClose: 3000,
-      hideProgressBar: false,
-      closeOnClick: true,
-      pauseOnHover: true,
-      draggable: true,
-      theme: "colored",
-    });
+      // ✅ Show toast notification
+      toast.success(`Recipe "${recipe.name}" saved successfully!`, {
+        position: "top-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        theme: "colored",
+      });
 
-    // Optional: still keep successMessage if you want inline text too
-    setSuccessMessage(`Recipe "${recipe.name}" saved successfully!`);
-  } catch (err) {
-    setError(err instanceof Error ? err.message : "Failed to save recipe");
-    toast.error(
-      err instanceof Error ? err.message : "Failed to save recipe",
-      { position: "top-left" },
-    );
-  } finally {
-    setApprovingRecipe(null);
-  }
-};
+      // Optional: still keep successMessage if you want inline text too
+      setSuccessMessage(`Recipe "${recipe.name}" saved successfully!`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to save recipe");
+      toast.error(
+        err instanceof Error ? err.message : "Failed to save recipe",
+        { position: "top-left" },
+      );
+    } finally {
+      setApprovingRecipe(null);
+    }
+  };
 
   const getRecipeRecommendations = async () => {
     // ✅ added: require completed profile for recipe recommendations
@@ -650,7 +662,7 @@ const approveRecipe = async (recipe: RecipeRecommendation, index: number) => {
     <div className="p-6 bg-white rounded-lg shadow-md">
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 gap-3">
         <h3 className="text-xl font-semibold">Recipe Recommendations</h3>
-        
+
         <button
           onClick={getRecipeRecommendations}
           disabled={loading || availableIngredients.length === 0}
@@ -683,9 +695,6 @@ const approveRecipe = async (recipe: RecipeRecommendation, index: number) => {
             {error}
           </div>
         )}
-
-    
-
 
         {availableIngredients.length > 0 && (
           <div className="flex flex-wrap gap-2">
@@ -1098,14 +1107,15 @@ const approveRecipe = async (recipe: RecipeRecommendation, index: number) => {
 
                   {/* Analysis result */}
                   {analysisResult && (
-                    <div className="p-4 bg-emerald-50 rounded-lg text-sm text-gray-700 space-y-2">
-                      <p>🍽 Calories: {analysisResult.calories}</p>
-                      <p>🥦 Fiber: {analysisResult.fiber}</p>
-                      <p>🥩 Fat: {analysisResult.fat}</p>
-                      <p>🍚 Carbs: {analysisResult.carbs}</p>
-                      <p>💪 Protein: {analysisResult.protein}</p>
-                    </div>
-                  )}
+  <div className="p-4 bg-emerald-50 rounded-lg text-sm text-gray-700 space-y-2">
+    <p>🍽 Calories: {analysisResult.data?.calories ?? "0"}</p>
+    <p>🥦 Fiber: {analysisResult.data?.fiber ?? "0"}</p>
+    <p>🥩 Fat: {analysisResult.data?.fat ?? "0"}</p>
+    <p>🍚 Carbs: {analysisResult.data?.carbs ?? "0"}</p>
+    <p>💪 Protein: {analysisResult.data?.protein ?? "0"}</p>
+  </div>
+)}
+
                 </div>
               </div>
             ),
@@ -1143,6 +1153,19 @@ const approveRecipe = async (recipe: RecipeRecommendation, index: number) => {
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
+      <ToastContainer
+  position="top-right"
+  autoClose={3000}
+  hideProgressBar={false}
+  newestOnTop={false}
+  closeOnClick
+  rtl={false}
+  pauseOnFocusLoss
+  draggable
+  pauseOnHover
+  theme="colored"
+/>
+
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex overflow-x-auto space-x-4 pb-4">
           {features.map((feature) => {

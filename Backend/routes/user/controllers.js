@@ -1,6 +1,7 @@
 import DishService from "../../services/dishes.js";
 import MealService from "../../services/meal.js";
 import UserService from "../../services/user.js";
+import multer from "multer";
 import httpResponse from "../../utils/httpResponse.js";
 import fetch from "node-fetch";
 import { GoogleGenerativeAI } from "@google/generative-ai";
@@ -17,10 +18,6 @@ const serverClient = new StreamClient(
   process.env.STREAM_API_KEY,
   process.env.STREAM_SECRET_KEY,
 );
-
-
-
-
 
 export const checkFoodForUser = async ({
   item,
@@ -100,15 +97,12 @@ Respond ONLY in valid JSON:
   const data = await response.json();
 
   const text =
-    data?.candidates?.[0]?.content?.parts
-      ?.map(p => p.text || "")
-      .join("") || "";
+    data?.candidates?.[0]?.content?.parts?.map((p) => p.text || "").join("") ||
+    "";
 
-
-      console.log(text, "text")
+  console.log(text, "text");
   // 🛡️ Safe JSON parsing
   return safeParseAIJSON(text);
-
 };
 
 function safeParseAIJSON(text) {
@@ -117,7 +111,7 @@ function safeParseAIJSON(text) {
   const cleanText = text.replace(/```json|```/g, "").trim();
 
   // 🔥 Detect incomplete JSON
-  if (cleanText.includes('"reason":') && !cleanText.includes('}')) {
+  if (cleanText.includes('"reason":') && !cleanText.includes("}")) {
     return fallback();
   }
 
@@ -133,11 +127,6 @@ function safeParseAIJSON(text) {
     return fallback();
   }
 }
-
-
-
-
-
 
 const controller = {
   register: async (req, res) => {
@@ -257,19 +246,20 @@ const controller = {
 
       const base64Image = req?.file?.buffer?.toString("base64");
 
-
       if (!client_Device_Id || !item || !quantity) {
         return httpResponse.BAD_REQUEST(res, {
-          error: "Missing required device data"
+          error: "Missing required device data",
         });
       }
 
       // 1️⃣ Find user using device ID
-      const userProfile = await UserService.UserProfileByDeviceId(client_Device_Id);
+      const userProfile = await UserService.UserProfileByDeviceId(
+        client_Device_Id,
+      );
 
       if (!userProfile) {
         return httpResponse.NOT_FOUND(res, {
-          error: "User not found for this device"
+          error: "User not found for this device",
         });
       }
 
@@ -280,22 +270,20 @@ const controller = {
         unit,
         mimetype: req?.file?.mimetype,
         base64Image,
-        userProfile
+        userProfile,
       });
 
       return httpResponse.SUCCESS(res, {
         deviceId: client_Device_Id,
         item,
-        result: aiResponse
+        result: aiResponse,
       });
-
     } catch (error) {
       return httpResponse.INTERNAL_SERVER(res, {
-        error: error.message
+        error: error.message,
       });
     }
   },
-
 
   update: async (req, res) => {
     req.body.id = req.user._id;
@@ -504,30 +492,82 @@ const controller = {
     }
   },
 
-  analyzeFoodImage: async (req, res) => {
-    try {
-      if (!req.file) {
-        return res.status(400).json({ error: "No image uploaded" });
-      }
-
-      // Convert image buffer to base64 for Gemini
-      const base64Image = req.file.buffer.toString("base64");
-
-      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-      const prompt =
-        "Analyze this food image and give nutrients (calories, protein, fat, fiber, carbs)";
-
-      const result = await model.generateContent([
-        { inlineData: { mimeType: req.file.mimetype, data: base64Image } },
-        prompt,
-      ]);
-
-      res.json({ data: result.response.text() });
-    } catch (error) {
-      console.error("Gemini error:", error);
-      res.status(500).json({ error: "Failed to analyze image" });
+analyzeFoodImage: async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: "No image uploaded" });
     }
-  },
+
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      return res.status(500).json({ error: "Gemini API key not found" });
+    }
+
+    // Convert image buffer to base64
+    const base64Image = req.file.buffer.toString("base64");
+
+    // Gemini API URL
+const url = `https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+
+    // Prompt asking Gemini to analyze food
+    const prompt = `
+Analyze this food image and return the nutrients (calories, protein, fat, fiber, carbs) in JSON format.
+Respond ONLY with valid JSON like:
+{
+  "calories": 200,
+  "protein": 10,
+  "fat": 5,
+  "fiber": 3,
+  "carbs": 30
+}
+`;
+
+    const requestBody = {
+      contents: [
+        {
+          parts: [
+            {
+              inlineData: {
+                mimeType: req.file.mimetype,
+                data: base64Image,
+              },
+            },
+            { text: prompt },
+          ],
+        },
+      ],
+      generationConfig: { temperature: 0.5, maxOutputTokens: 1024 },
+    };
+
+    // Call Gemini
+    const response = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(requestBody),
+    });
+
+    if (!response.ok) {
+      const errText = await response.text();
+      console.error("Gemini API error:", errText);
+      return res.status(500).json({ error: "Failed to analyze image", details: errText });
+    }
+
+    const data = await response.json();
+
+    // Extract the response text
+    const rawText =
+      data?.candidates?.[0]?.content?.parts?.map((p) => p.text || "").join("") || "";
+
+    // Safe JSON parsing
+    const nutrients = safeParseAIJSON(rawText);
+
+    return res.status(200).json({ data: nutrients });
+  } catch (error) {
+    console.error("Gemini error:", error);
+    return res.status(500).json({ error: "Failed to analyze image", details: error.message });
+  }
+},
+
 
   generateMealPlan: async (req, res) => {
     try {
@@ -713,8 +753,7 @@ Return ONLY valid JSON with no extra text or formatting:
       
       Respond with JSON in this exact format:`;
 
-      const apiKey =
-        process.env.GEMINI_API_KEY || "";
+      const apiKey = process.env.GEMINI_API_KEY || "";
       const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
       const requestBody = {
         systemInstruction: {
@@ -823,8 +862,7 @@ Return ONLY valid JSON with no extra text or formatting:
       
       Respond with JSON in this exact format:`;
 
-      const apiKey =
-        process.env.GEMINI_API_KEY || "";
+      const apiKey = process.env.GEMINI_API_KEY || "";
       const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
 
       const requestBody = {

@@ -144,6 +144,14 @@ export const updateRequestChat = async (req, res) => {
       },
       { new: true } // return updated doc
     );
+io.emit("chatUpdated", {
+  requestId: id,
+  message: {
+    type,
+    message,
+    timestamp: new Date(),
+  },
+});
 
     res.status(200).json({ success: true, request: updatedRequest });
   } catch (err) {

@@ -13,6 +13,7 @@
   "author": "@mrizwanashiq",
   "license": "MIT",
   "dependencies": {
+    "@google-cloud/vision": "^5.3.4",
     "@google/generative-ai": "^0.24.1",
     "@stream-io/node-sdk": "^0.7.17",
     "axios": "^0.24.0",
@@ -29,6 +30,7 @@
     "node-fetch": "^3.3.2",
     "openai": "^6.7.0",
     "password-hash": "^1.2.2",
+    "socket.io": "^4.8.3",
     "stream": "^0.0.3"
   },
   "devDependencies": {
